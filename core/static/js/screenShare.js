@@ -1,10 +1,16 @@
 export class ScreenShare {
+
     constructor(uiManager) {
+
         this.uiManager = uiManager;
         this.elements = uiManager.getElements();
 
         // Core properties
         this.stream = null;
+
+        this.recorder = null;
+        this.recordedChunks = null;
+
         this.trueWidth = 0;
         this.trueHeight = 0;
         this.isDrawing = false;
@@ -23,6 +29,14 @@ export class ScreenShare {
         this.startScreenShare = this.startScreenShare.bind(this);
         this.stopSharing = this.stopSharing.bind(this);
         this.resetCrop = this.resetCrop.bind(this);
+    }
+
+    getTrueWidth() {
+        return this.trueWidth;
+    }
+
+    getTrueHeight() {
+        return this.trueHeight;
     }
 
     initializeEventListeners() {
@@ -88,6 +102,15 @@ export class ScreenShare {
         this.updateDimensions();
     }
 
+    getVideoBounds() {
+        if (!this.elements.sharedScreen) {
+            console.error('sharedScreen element is missing');
+            return { width: 0, height: 0}
+        }
+
+        return this.elements.sharedScreen.getBoundingClientRect()
+    }
+
     endDraw() {
         this.isDrawing = false;
     }
@@ -107,27 +130,44 @@ export class ScreenShare {
     }
 
     async startScreenShare() {
-        const { sharedScreen, cropOverlay, shareButton, stopButton } = this.elements;
+        const { sharedScreen, cropOverlay, shareButton, stopButton, recordButton } = this.elements;
 
         this.updateStatus('Click "Start Screen Share" and select the window or screen you want to share');
+
         try {
+
             if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
                 throw new Error('Screen sharing is not supported in this browser');
             }
 
+            // if (navigator.mediaDevices.setCaptureHandleConfig) {
+            //     navigator.mediaDevices.setCaptureHandleConfig({
+            //         excludedElements: [document.getElementById("previewModal")]
+            //     });
+            // }
+
             console.log('attempting screen share ', this);
+
+            // START SCREEN SHARING
             this.stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                     cursor: "never",
                     // displaySurface: "monitor",
                     displaySurface: "window",
+                    // displaySurface: 'browser',
                 },
                 audio: false
             });
 
             console.log("screen share started successfully!", this.stream);
 
+            const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
             sharedScreen.srcObject = this.stream;
+            // this.uiManager.elements.previewVideo.srcObject = this.stream;
+            // previewVideo.srcObject = this.stream;
+            hiddenScreenRecorder.srcObject = this.stream;
+
+            recordButton.style.display = "inline-block";
 
             await new Promise(resolve => {
                 sharedScreen.onloadedmetadata = () => {
@@ -139,6 +179,22 @@ export class ScreenShare {
 
             await sharedScreen.play();
 
+            // await new Promise(resolve => {
+            //     previewVideo.onloadedmetadata = () => {
+            //         this.trueWidth = previewVideo.videoWidth;
+            //         this.trueHeight = previewVideo.videoHeight;
+            //         resolve();
+            //     };
+            // });
+    
+            // await previewVideo.play();
+    
+
+            this.uiManager.updateStatus("Screen sharing started. Click and drag to select a preview area.");
+            shareButton.style.display = "none";
+            // stopButton.style.display = "inline-block";
+            recordButton.style.display = "inline-block";
+
             const recordingIndicator = document.getElementById('recordingIndicator');
             recordingIndicator.classList.add('active');
             this.updateStatus('Please drag to draw a box to crop the view region you want the AI to examine');
@@ -146,20 +202,26 @@ export class ScreenShare {
 
             sharedScreen.style.display = 'block';
             cropOverlay.style.display = 'block';
-            shareButton.style.display = 'none';
             stopButton.style.display = 'inline-block';
 
+            // START RECORDING ENTIRE SCREEN
+            // this.startRecording(this.stream);
+
+            // this.uiManager.elements.previewVideo.play();
+
             this.stream.getVideoTracks()[0].addEventListener('ended', () => {
+                this.uiManager.updateStatus("Screen share stopped by user.")
                 this.updateStatus('Screen share stopped by user');
                 this.stopSharing();
             });
 
             requestAnimationFrame(this.updatePreview);
 
+            // *** REPLACED WITH RECORDING ABOVE ***
             // Start automatic screenshots every 10 seconds
-            this.screenshotInterval = setInterval(() => {
-                this.captureAndSendScreenshot();
-            }, 2000);
+            // this.screenshotInterval = setInterval(() => {
+            //     this.captureAndSendScreenshot();
+            // }, 2000);
 
         } catch (err) {
             this.updateStatus(`Error: ${err.message}`);
@@ -168,8 +230,83 @@ export class ScreenShare {
         }
     }
 
+    startRecording() {
+
+        this.recordedChunks = [];
+        const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
+
+        if (!hiddenScreenRecorder || !hiddenScreenRecorder.srcObject) {
+            console.log('Error: No valid screen recording source')
+            return;
+        }
+
+        // this.recorder = new MediaRecorder(hiddenScreenRecorder.srcObject, { mimeType: "video/webm" });
+        this.recorder = new MediaRecorder(this.stream, { mimeType: "video/webm" });
+
+        this.recorder.ondataavailable = event => {
+            if (event.data.size > 0) {
+                this.recordedChunks.push(event.data);
+            }
+        };
+
+        this.recorder.onstop = () => {
+            this.saveRecording();
+        };
+
+        this.recorder.start();
+        this.uiManager.updateStatus('Recording in progress...');
+
+    }
+
+    stopRecording() {
+        
+        if (this.recorder) {
+            this.recorder.stop();
+            this.uiManager.updateStatus('Recording stopped.');
+            this.recorder = null;
+        }
+
+        // this.uiManager.closePreviewModal();
+
+    }
+
+    saveRecording() {
+
+        const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+        const formData = new FormData();
+        formData.append("video", blob, 'screen-recording.webm');
+
+        // TEST CASE
+        let case_id = 2;
+
+        fetch(`/api/cases/${ case_id }/save-recording/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.uiManager.updateStatus(`Recording saved.`);
+            } else {
+                console.error('Upload failed: ', data.error);
+            }
+        })
+        .catch(error => console.log('Upload error: ', error));
+        // const url = URL.createObjectURL(blob);
+        // const a = document.createElement('a');
+
+        // a.href = url;
+        // a.download = 'screen-recording.webm';
+        // document.body.appendChild(a);
+        // a.click();
+        // URL.revokeObjectURL(url);
+        // this.uiManager.updateDimensions('Recording saveded.');
+
+    }
+
     stopSharing() {
-        const { sharedScreen, cropOverlay, cropBox, shareButton, stopButton, resetCropButton, previewCanvas } = this.elements;
+        const { sharedScreen, cropOverlay, cropBox, shareButton, 
+            stopButton, resetCropButton, previewCanvas, recordButton, confirmRecordButton } = this.elements;
 
         if (this.stream) {
             this.stream.getTracks().forEach(track => track.stop());
@@ -178,12 +315,16 @@ export class ScreenShare {
                 this.screenshotInterval = null;
             }
         }
+
+        // STOP RECORDING WHEN SHARING ENDS
+        this.stopRecording();
         
         // Remove active class from recording indicator and status
         const recordingIndicator = document.getElementById('recordingIndicator');
         recordingIndicator.classList.remove('active');
         recordingIndicator.classList.remove('live');
         
+        previewCanvas.style.display = 'none';
         sharedScreen.srcObject = null;
         sharedScreen.style.display = 'none';
         cropOverlay.style.display = 'none';
@@ -191,6 +332,10 @@ export class ScreenShare {
         shareButton.style.display = 'inline-block';
         stopButton.style.display = 'none';
         resetCropButton.style.display = 'none';
+
+        recordButton.style.display = 'none';
+        confirmRecordButton.style.display = 'none';
+
         this.updateStatus('Screen capture ended');
         this.elements.dimensionsDiv.textContent = 'Resolution: Not sharing';
 
@@ -280,14 +425,23 @@ export class ScreenShare {
         const base64Image = canvas.toDataURL('image/jpeg');
 
         try {
-            const response = await fetch('/api/save-screenshot', {
+
+            let caseID = 1;
+
+            const formData = new URLSearchParams();
+            formData.append("image", base64Image);
+
+            const response = await fetch(`/api/cases/${ caseID }/save-screenshot/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // 'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: JSON.stringify({ image: base64Image })
+                // body: JSON.stringify({ image: base64Image })
+                body: formData
             });
             const result = await response.json();
+            console.log('RESPONSE = ', result);
             if (result.success) {
                 const recordingIndicator = document.getElementById('recordingIndicator');
                 recordingIndicator.classList.remove('active');

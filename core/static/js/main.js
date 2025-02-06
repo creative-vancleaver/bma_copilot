@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cropManager = new CropManager(screenShare, uiManager);
 
     // Initialize the application
-    uiManager.initialize();
+    uiManager.initialize(screenShare, cropManager);
     screenShare.initialize();
     cropManager.initialize();
 });

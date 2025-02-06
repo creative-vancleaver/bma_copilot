@@ -3,6 +3,11 @@
 <!DOCTYPE html>
 <html>
 
+<style>
+
+</style>
+
+
 
 <head>
     <title>BMACopilot - Smart Screen Capture Prototype</title>
@@ -61,6 +66,25 @@
                 </svg>
                 Reset Selection
             </button>
+
+            <button id="recordButton" class="btn btn-primary" style="display: none;">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8"/>
+                </svg>
+                Start Recording
+            </button>
+
+            <button id="confirmRecordButton" class="btn btn-primary" style="display: none;">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M9 16.2l-5.5-5.5-1.5 1.5 7 7 12-12-1.5-1.5z"/>
+                </svg>
+                Confirm Record
+            </button>
+
+            <button id="stopRecordingButton" class="btn btn-danger" style="display: none;">
+                Stop Recording
+            </button>
+        
         </div>
 
         <div class="content-container">
@@ -84,6 +108,22 @@
     </main>
 
     <script type="module" src="{% static 'js/main.js' %}"></script>
+
+    {% comment %} <div id="previewModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <video id="previewVideo" autoplay playsinline>
+                <button id="stopRecordingButton" class="btn btn-danger">
+                    Stop Recording
+                </button>
+            </video>
+        </div>
+    </div> {% endcomment %}
+
+    {% comment %} {% include 'core/preview_modal.html' %} {% endcomment %}
+
+    <video id="hiddenScreenRecorder" autoplay playsinline style="display: none;"></video>
+
+
 </body>
 
 </html>

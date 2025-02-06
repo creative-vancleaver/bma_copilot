@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Preview</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(255, 255, 255, 0.2);
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+        button:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+<body>
+    <h3>Live Preview</h3>
+    <video id="previewVideo" autoplay playsinline></video>
+    <button id="stopRecordingButton">🛑 Stop Recording</button>
+
+    <script>
+        window.addEventListener("message", async (event) => {
+            if (event.data.action === "setStream") {
+                console.log("🎥 Receiving stream in modal...");
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { deviceId: event.data.stream }
+                    });
+
+                    document.getElementById("previewVideo").srcObject = stream;
+                } catch (err) {
+                    console.error("❌ Error accessing stream in modal:", err);
+                }
+            }
+        });
+
+        // ✅ Handle stop button inside popup
+        document.getElementById("stopRecordingButton").addEventListener("click", () => {
+            window.opener.postMessage({ action: "stopRecording" }, "*");
+            window.close();
+        });
+    </script>
+</body>
+</html>
+
+
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Preview</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(255, 255, 255, 0.2);
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+        button:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+<body>
+    <h3>Live Preview</h3>
+    <video id="previewVideo" autoplay playsinline></video>
+    <button id="stopRecordingButton">🛑 Stop Recording</button>
+
+    <script>
+        // ✅ Assign the screen share stream to the new window's video
+        window.addEventListener("message", (event) => {
+            if (event.data.streamId) {
+                navigator.mediaDevices.getUserMedia({ video: { deviceId: event.data.streamId } })
+                    .then(stream => {
+                        document.getElementById("previewVideo").srcObject = stream;
+                    })
+                    .catch(err => console.error("Error accessing stream in modal:", err));
+            }
+        });
+
+        // ✅ Handle stop button inside popup
+        document.getElementById("stopRecordingButton").addEventListener("click", () => {
+            window.opener.postMessage({ action: "stopRecording" }, "*");
+            window.close();
+        });
+    </script>
+</body>
+</html> {% endcomment %}
