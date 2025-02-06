@@ -130,7 +130,7 @@ export class ScreenShare {
     }
 
     async startScreenShare() {
-        const { sharedScreen, cropOverlay, shareButton, stopButton, recordButton } = this.elements;
+        const { sharedScreen, cropOverlay, shareButton, stopButton, recordButton, controlPanel, navBar, statusPanel } = this.elements;
 
         this.updateStatus('Click "Start Screen Share" and select the window or screen you want to share');
 
@@ -204,6 +204,13 @@ export class ScreenShare {
             cropOverlay.style.display = 'block';
             stopButton.style.display = 'inline-block';
 
+            const navHeight = navBar.offsetHeight;
+            console.log('navHeight ', navHeight);
+            const position = statusPanel.getBoundingClientRect().top + window.scrollY;
+            const offsetPosition = position - navHeight;
+            console.log('offset ', offsetPosition);
+            window.scrollTo({ behavior: "smooth", top: offsetPosition });
+
             // START RECORDING ENTIRE SCREEN
             // this.startRecording(this.stream);
 
@@ -266,6 +273,9 @@ export class ScreenShare {
             this.recorder = null;
         }
 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.uiManager.elements.stopRecordingButton.style.display = 'none';
+
         // this.uiManager.closePreviewModal();
 
     }
@@ -277,7 +287,7 @@ export class ScreenShare {
         formData.append("video", blob, 'screen-recording.webm');
 
         // TEST CASE
-        let case_id = 2;
+        let case_id = 1;
 
         fetch(`/api/cases/${ case_id }/save-recording/`, {
             method: 'POST',
