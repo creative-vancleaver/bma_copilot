@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+
+<head>
+    <title>
+        {% block title %}
+            BMACopilot - Smart Screen Capture Prototype
+        {% endblock title %}
+    </title>
+    <link rel="stylesheet" href="{% static 'core/css/styles.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+
+    {% block head %}{% endblock head %}
+</head>
+
+<body>
+    <nav id="navBar" class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">
+                <img src="{% static 'core/images/logo.png' %}" alt="BMACopilot Logo" class="logo">
+                <span class="brand-name">BMACopilot</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="app-container">
+        {% block content %}{% endblock content %}
+    </main>
+
+    <script type="module" src="{% static 'core/js/main.js' %}"></script>
+
+    {% comment %} <video id="hiddenScreenRecorder" autoplay playsinline style="display: none;"></video> {% endcomment %}
+
+
+</body>
+
+</html>

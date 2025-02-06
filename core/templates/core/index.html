@@ -1,21 +1,24 @@
+{% extends 'core/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
+{% comment %} <!DOCTYPE html>
 <html>
 
 <style>
 
 </style>
+ {% endcomment %}
 
-
-
+{% comment %} {% block head %}
 <head>
     <title>BMACopilot - Smart Screen Capture Prototype</title>
     <link rel="stylesheet" href="{% static 'core/css/styles.css' %}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <script type="module" src="{% static 'core/js/main.js' %}"></script>
 </head>
+{% endblock head %} {% endcomment %}
 
-<body>
+{% comment %} <body>
     <nav id="navBar" class="navbar">
         <div class="nav-content">
             <div class="nav-brand">
@@ -23,9 +26,10 @@
                 <span class="brand-name">BMACopilot</span>
             </div>
         </div>
-    </nav>
+    </nav> {% endcomment %}
 
-    <main class="app-container">
+    {% comment %} <main class="app-container"> {% endcomment %}
+    {% block content %}
         <header class="app-header">
             <h1>BMACopilot - Smart Screen Capture Prototype</h1>
             <p class="app-description">
@@ -110,9 +114,9 @@
             </div>
 
         </div>
-    </main>
+    {% endblock content %}
+    {% comment %} </main>
 
-    <script type="module" src="{% static 'core/js/main.js' %}"></script>
 
     {% comment %} <div id="previewModal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -126,9 +130,9 @@
 
     {% comment %} {% include 'core/preview_modal.html' %} {% endcomment %}
 
-    <video id="hiddenScreenRecorder" autoplay playsinline style="display: none;"></video>
+    {% comment %} <video id="hiddenScreenRecorder" autoplay playsinline style="display: none;"></video>
 
 
 </body>
 
-</html>
+</html> {% endcomment %}

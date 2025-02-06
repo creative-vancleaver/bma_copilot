@@ -161,11 +161,11 @@ export class ScreenShare {
 
             console.log("screen share started successfully!", this.stream);
 
-            const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
+            // const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
             sharedScreen.srcObject = this.stream;
             // this.uiManager.elements.previewVideo.srcObject = this.stream;
             // previewVideo.srcObject = this.stream;
-            hiddenScreenRecorder.srcObject = this.stream;
+            // hiddenScreenRecorder.srcObject = this.stream;
 
             recordButton.style.display = "inline-block";
 
@@ -240,12 +240,12 @@ export class ScreenShare {
     startRecording() {
 
         this.recordedChunks = [];
-        const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
+        // const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
 
-        if (!hiddenScreenRecorder || !hiddenScreenRecorder.srcObject) {
-            console.log('Error: No valid screen recording source')
-            return;
-        }
+        // if (!hiddenScreenRecorder || !hiddenScreenRecorder.srcObject) {
+        //     console.log('Error: No valid screen recording source')
+        //     return;
+        // }
 
         // this.recorder = new MediaRecorder(hiddenScreenRecorder.srcObject, { mimeType: "video/webm" });
         this.recorder = new MediaRecorder(this.stream, { mimeType: "video/webm" });

@@ -48,8 +48,7 @@ INSTALLED_APPS = [
     'cases',
     'regions',
     'cells',
-    'detection',
-    'classification',
+
 ]
 
 MIDDLEWARE = [

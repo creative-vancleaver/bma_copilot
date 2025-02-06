@@ -23,6 +23,43 @@ class CaseViewSet(viewsets.ModelViewSet):
     serializer_class = CaseSerializer
     permission_classes = [IsAuthenticated]
 
+def case(request, case_id):
+
+        # Dummy data for differential counts (replace with real DB data)
+    differential_counts = {
+        "Neutrophils": 6.3,
+        "Monocytes": 2.0,
+        "Metamyelocytes": 11.0,
+        "Eosinophils": 3.3,
+        "Lymphocytes": 15.6,
+        "Plasma Cells": 4.3,
+    }
+
+    # Dummy images grouped by cell type (replace with real image paths or database queries)
+    cell_classifications = {
+        "Neutrophils": [
+            {"url": "/static/images/neutrophil1.jpg"},
+            {"url": "/static/images/neutrophil2.jpg"},
+            {"url": "/static/images/neutrophil3.jpg"},
+        ],
+        "Monocytes": [
+            {"url": "/static/images/monocyte1.jpg"},
+            {"url": "/static/images/monocyte2.jpg"},
+        ],
+        "Lymphocytes": [
+            {"url": "/static/images/lymphocyte1.jpg"},
+            {"url": "/static/images/lymphocyte2.jpg"},
+            {"url": "/static/images/lymphocyte3.jpg"},
+        ],
+    }
+
+    context = {
+        'differential_counts': differential_counts,
+        'cell_classifications': cell_classifications,
+    }
+
+    return render (request, 'cases/case.html', context)
+
 os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=True)
 
 @csrf_exempt # DEV ENV ONLY
