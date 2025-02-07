@@ -166,8 +166,6 @@ export class CropManager {
                 this.previewCanvas.width,
                 this.previewCanvas.height
             );
-
-            // this.uiManager.updateModalPreviewPosition(this);
             
             requestAnimationFrame(() => this.updatePreview());
         } catch (error) {

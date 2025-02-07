@@ -159,13 +159,7 @@ export class ScreenShare {
                 audio: false
             });
 
-            console.log("screen share started successfully!", this.stream);
-
-            // const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
             sharedScreen.srcObject = this.stream;
-            // this.uiManager.elements.previewVideo.srcObject = this.stream;
-            // previewVideo.srcObject = this.stream;
-            // hiddenScreenRecorder.srcObject = this.stream;
 
             recordButton.style.display = "inline-block";
 
@@ -177,22 +171,10 @@ export class ScreenShare {
                 };
             });
 
-            await sharedScreen.play();
-
-            // await new Promise(resolve => {
-            //     previewVideo.onloadedmetadata = () => {
-            //         this.trueWidth = previewVideo.videoWidth;
-            //         this.trueHeight = previewVideo.videoHeight;
-            //         resolve();
-            //     };
-            // });
-    
-            // await previewVideo.play();
-    
+            await sharedScreen.play();    
 
             this.uiManager.updateStatus("Screen sharing started. Click and drag to select a preview area.");
             shareButton.style.display = "none";
-            // stopButton.style.display = "inline-block";
             recordButton.style.display = "inline-block";
 
             const recordingIndicator = document.getElementById('recordingIndicator');
@@ -205,16 +187,12 @@ export class ScreenShare {
             stopButton.style.display = 'inline-block';
 
             const navHeight = navBar.offsetHeight;
-            console.log('navHeight ', navHeight);
             const position = statusPanel.getBoundingClientRect().top + window.scrollY;
             const offsetPosition = position - navHeight;
-            console.log('offset ', offsetPosition);
             window.scrollTo({ behavior: "smooth", top: offsetPosition });
 
             // START RECORDING ENTIRE SCREEN
             // this.startRecording(this.stream);
-
-            // this.uiManager.elements.previewVideo.play();
 
             this.stream.getVideoTracks()[0].addEventListener('ended', () => {
                 this.uiManager.updateStatus("Screen share stopped by user.")
@@ -240,14 +218,7 @@ export class ScreenShare {
     startRecording() {
 
         this.recordedChunks = [];
-        // const hiddenScreenRecorder = document.getElementById("hiddenScreenRecorder");
 
-        // if (!hiddenScreenRecorder || !hiddenScreenRecorder.srcObject) {
-        //     console.log('Error: No valid screen recording source')
-        //     return;
-        // }
-
-        // this.recorder = new MediaRecorder(hiddenScreenRecorder.srcObject, { mimeType: "video/webm" });
         this.recorder = new MediaRecorder(this.stream, { mimeType: "video/webm" });
 
         this.recorder.ondataavailable = event => {
@@ -276,8 +247,6 @@ export class ScreenShare {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         this.uiManager.elements.stopRecordingButton.style.display = 'none';
 
-        // this.uiManager.closePreviewModal();
-
     }
 
     saveRecording() {
@@ -302,15 +271,6 @@ export class ScreenShare {
             }
         })
         .catch(error => console.log('Upload error: ', error));
-        // const url = URL.createObjectURL(blob);
-        // const a = document.createElement('a');
-
-        // a.href = url;
-        // a.download = 'screen-recording.webm';
-        // document.body.appendChild(a);
-        // a.click();
-        // URL.revokeObjectURL(url);
-        // this.uiManager.updateDimensions('Recording saveded.');
 
     }
 
@@ -450,8 +410,9 @@ export class ScreenShare {
                 // body: JSON.stringify({ image: base64Image })
                 body: formData
             });
+
             const result = await response.json();
-            console.log('RESPONSE = ', result);
+            
             if (result.success) {
                 const recordingIndicator = document.getElementById('recordingIndicator');
                 recordingIndicator.classList.remove('active');

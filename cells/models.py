@@ -26,12 +26,12 @@ class Cell(models.Model):
     
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="cells")
     image = models.ImageField(upload_to=cell_image_path, blank=True, null=True)
-    center_x_in_region = models.FloatField()
-    center_y_in_region = models.FloatField()
-    TL_x_in_region = models.FloatField()
-    TL_y_in_region = models.FloatField()
-    BR_x_in_region = models.FloatField()
-    BR_y_in_region = models.FloatField()
+    center_x_in_region = models.FloatField(blank=True, null=True)
+    center_y_in_region = models.FloatField(blank=True, null=True)
+    TL_x_in_region = models.FloatField(blank=True, null=True)
+    TL_y_in_region = models.FloatField(blank=True, null=True)
+    BR_x_in_region = models.FloatField(blank=True, null=True)
+    BR_y_in_region = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return f"Cell { self.id } in Region { self.region.id }"
@@ -43,9 +43,9 @@ class Cell(models.Model):
     
 class CellDetection(models.Model):
 
-    cell = models.OneToOneField(Cell, on_delete=models.CASCADE, related_name="classification")
-    detection_score = models.FloatField()
-    model_id = models.IntegerField()
+    cell = models.OneToOneField(Cell, on_delete=models.CASCADE, related_name="detection")
+    detection_score = models.FloatField(blank=True, null=True)
+    model_id = models.IntegerField(blank=True, null=True)
     is_user_added = models.BooleanField(default=False)
 
     def __str__(self):
@@ -53,10 +53,10 @@ class CellDetection(models.Model):
     
 class CellClassification(models.Model):
 
-    cell = models.OneToOneField(Cell, on_delete=models.CASCADE, related_name='classifcation')
+    cell = models.OneToOneField(Cell, on_delete=models.CASCADE, related_name='classification')
     ai_class = models.CharField(max_length=250, blank=True, null=True)
     user_class = models.CharField(max_length=250, blank=True, null=True)
-
+    
     myelocyte_score = models.FloatField(blank=True, null=True)
     metamyelocyte_score = models.FloatField(blank=True, null=True)
     neutrophil_score = models.FloatField(blank=True, null=True)
@@ -65,10 +65,12 @@ class CellClassification(models.Model):
     erythroid_precursor_score = models.FloatField(blank=True, null=True)
     lymphocyte_score = models.FloatField(blank=True, null=True)
     plasma_cell_score = models.FloatField(blank=True, null=True)
-    blast_and_blast_like_score = models.FloatField(blank=True, null=True)
+    blast_score = models.FloatField(blank=True, null=True)
     skippocyte_score = models.FloatField(blank=True, null=True)
 
-    model_id = models.IntegerField()
+    basophil_score = models.FloatField(blank=True, null=True)
+
+    model_id = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"Cell { self.cell.id } Classification"

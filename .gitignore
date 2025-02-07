@@ -4,4 +4,7 @@ __pycache__/*
 
 /media/*
 
+*/fixtures/
+*/fixtures/*
+
 .DS_Store

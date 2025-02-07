@@ -1,0 +1,168 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Case {{ case.name }}{% endblock %}
+
+{% block head %}
+<style>
+    .container {
+        display: flex;
+    }
+
+    .sidebar {
+        width: 250px;
+        background: #f0ebf8;
+        padding: 20px;
+        height: 100vh;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: bold;
+        font-size: 18px;
+    }
+    
+    .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    
+    .sidebar-section h3 {
+        font-size: 16px;
+        color: #5a3ea3;
+        margin-top: 10px;
+    }
+    
+    .sidebar-section ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .sidebar-section ul li {
+        background: white;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .content {
+        flex: 1;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .classification-header h2 {
+        font-size: 24px;
+        color: #4a2f93;
+    }
+    
+    .cell-classification {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
+    
+    .cell-images {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        justif-content: flex-start;
+        gap: 10px;
+        padding: 1rem;
+    }
+    
+    .cell-images img {
+        width: 100%;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    .percentage {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #4a2f93;
+    }
+</style>
+<script src="{% static 'core/js/Cell.js' %}"></script>
+{% endblock head %}
+
+{% block content %}
+
+    <div class="container">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Summary</h2>
+                <button class="menu-toggle">XX</button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Annotated Regions</h3>
+            </div>
+            <div class="sidebar-section">
+                <h3>Differential Count</h3>
+                <h5>Cell Total: {{ cell_total }}</h5>
+                <ul>
+                    {% for cell_type, percentage in diff_counts.items %}
+                        <li>{{ cell_type|replace:"- "|title }} <span id="{{ cell_type }}_percent" class="percent">{{ percentage }}%</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </aside>
+
+        <div class="content">
+            <div class="classification-header">
+                <h2>Cell Classifications</h2>
+            </div>
+
+            {% comment %} <pre>{{ cell_groups | pprint }}</pre> {% endcomment %}
+
+
+            <div class="cell-classification-container">
+                {% for class_name in cell_order %}
+                    {% if class_name in cell_groups %}
+                        <section id="{{ class_name }}" class="cell-classification" data-class="{{ class_name }}">
+                            <h3>{{ class_name|replace:"- "|title }}</h3>
+                            <div class="cell-images">
+                                {% with cell_groups|get_item:class_name as cells %}        
+                                    {% for cell in cells %}        
+                                        {% if cell.image_url %}
+                                            <div class="cell-image" data-class="{{ class_name }}" data-id="{{ cell.id }}">
+                                                <img src="{{ cell.image_url }}" alt="{{ class_name }}">
+                                            </div>
+                                        {% else %}
+                                            <div style="width: 100px; height: 100px; background-color: #808080"></div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </section>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+
+            $('.cell-image').each(function() {
+                Cell.cellItemClickHandler(this);
+            });
+            
+        });
+    </script>
+
+{% endblock content %}
+

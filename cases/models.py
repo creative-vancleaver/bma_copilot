@@ -15,7 +15,7 @@ def case_video_path(instance, filename):
 
     filename = f"recording_{ timestamp }.webm"
 
-    return os.path.join("cases", str(instance.id), "recordings", filename)
+    return os.path.join("cases", str(instance.case.id), "recordings", filename)
 
 class Case(models.Model):
 
@@ -27,12 +27,12 @@ class Case(models.Model):
     ]
 
     name = models.CharField(max_length=250)
+    date_added = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
     date = models.DateField()
     time = models.TimeField()
     status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='pending')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cases')
-    video_file = models.FileField(upload_to=case_video_path, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -43,3 +43,12 @@ class Case(models.Model):
             models.Index(fields=['date']), 
             models.Index(fields=['user'])
         ]
+
+class Video(models.Model):
+
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="videos")
+    video_file = models.FileField(upload_to=case_video_path, blank=True, null=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Video for Case: { self.case.name }"

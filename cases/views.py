@@ -3,6 +3,10 @@ import base64
 import pytz
 import time
 
+import random
+import copy
+from collections import defaultdict
+
 from datetime import datetime
 
 from django.conf import settings
@@ -14,7 +18,10 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Case
+from cells.models import Cell, CellClassification
+from cells.views import DifferentialCountView, CellStatsView
+
+from .models import Case, Video
 from .serializers import CaseSerializer
 
 class CaseViewSet(viewsets.ModelViewSet):
@@ -23,46 +30,10 @@ class CaseViewSet(viewsets.ModelViewSet):
     serializer_class = CaseSerializer
     permission_classes = [IsAuthenticated]
 
-def case(request, case_id):
-
-        # Dummy data for differential counts (replace with real DB data)
-    differential_counts = {
-        "Neutrophils": 6.3,
-        "Monocytes": 2.0,
-        "Metamyelocytes": 11.0,
-        "Eosinophils": 3.3,
-        "Lymphocytes": 15.6,
-        "Plasma Cells": 4.3,
-    }
-
-    # Dummy images grouped by cell type (replace with real image paths or database queries)
-    cell_classifications = {
-        "Neutrophils": [
-            {"url": "/static/images/neutrophil1.jpg"},
-            {"url": "/static/images/neutrophil2.jpg"},
-            {"url": "/static/images/neutrophil3.jpg"},
-        ],
-        "Monocytes": [
-            {"url": "/static/images/monocyte1.jpg"},
-            {"url": "/static/images/monocyte2.jpg"},
-        ],
-        "Lymphocytes": [
-            {"url": "/static/images/lymphocyte1.jpg"},
-            {"url": "/static/images/lymphocyte2.jpg"},
-            {"url": "/static/images/lymphocyte3.jpg"},
-        ],
-    }
-
-    context = {
-        'differential_counts': differential_counts,
-        'cell_classifications': cell_classifications,
-    }
-
-    return render (request, 'cases/case.html', context)
 
 os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=True)
 
-@csrf_exempt # DEV ENV ONLY
+@csrf_exempt # EXEMPT IN DEV ONLY
 def save_recording(request, case_id):
 
     if request.method != 'POST':
@@ -81,35 +52,18 @@ def save_recording(request, case_id):
         
         video_file = request.FILES["video"]
 
-        # pst = pytz.timezone('America/Los_Angeles')
-        # current_time = datetime.now(pst)
-        # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
-        # filename = f"recording_{ timestamp }.webm"
-        # # filepath = os.path.join("cases/recodings", filename)
-        # filepath = os.path.join("cases", str(case_id), "recordings", filename)
-
-        # os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases", str(case_id), "recordings"), exist_ok=True)
-
-
-        # file_path_full = os.path.join(settings.MEDIA_ROOT, filepath)
-        # with default_storage.open(file_path_full, 'wb') as f:
-        #     for chunk in video_file.chunks():
-        #         f.write(chunk)
-
         case = Case.objects.get(id=case_id)
-        # case.video_file_path = filepath
-        case.video_file.save(video_file.name, video_file)
-        case.save()
-
-        # file_url = os.path.join(settings.MEDIA_URL, filepath)
-        # print("Saved video file at:", file_url)
+        
+        # INITIALIZE NEW VIDEO OBJECT
+        new_video = Video(case=case)
+        new_video.video_file.save(video_file.name, video_file)
+        new_video.save()
 
         return JsonResponse({
             "success": True,
-            # "filename": filename,
-            # "url": file_url,
-            "filename": case.video_file.name,
-            "url": case.video_file.url
+            "case": case.id,
+            "filename": new_video.video_file.name,
+            "url": new_video.video_file.url
         })
     
     except Exception as e:

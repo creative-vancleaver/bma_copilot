@@ -1,34 +1,10 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% comment %} <!DOCTYPE html>
-<html>
-
-<style>
-
-</style>
- {% endcomment %}
-
-{% comment %} {% block head %}
-<head>
-    <title>BMACopilot - Smart Screen Capture Prototype</title>
-    <link rel="stylesheet" href="{% static 'core/css/styles.css' %}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+{% block head %}
     <script type="module" src="{% static 'core/js/main.js' %}"></script>
-</head>
-{% endblock head %} {% endcomment %}
+{% endblock head %}
 
-{% comment %} <body>
-    <nav id="navBar" class="navbar">
-        <div class="nav-content">
-            <div class="nav-brand">
-                <img src="/static/images/logo.png" alt="BMACopilot Logo" class="logo">
-                <span class="brand-name">BMACopilot</span>
-            </div>
-        </div>
-    </nav> {% endcomment %}
-
-    {% comment %} <main class="app-container"> {% endcomment %}
     {% block content %}
         <header class="app-header">
             <h1>BMACopilot - Smart Screen Capture Prototype</h1>
@@ -115,24 +91,3 @@
 
         </div>
     {% endblock content %}
-    {% comment %} </main>
-
-
-    {% comment %} <div id="previewModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <video id="previewVideo" autoplay playsinline>
-                <button id="stopRecordingButton" class="btn btn-danger">
-                    Stop Recording
-                </button>
-            </video>
-        </div>
-    </div> {% endcomment %}
-
-    {% comment %} {% include 'core/preview_modal.html' %} {% endcomment %}
-
-    {% comment %} <video id="hiddenScreenRecorder" autoplay playsinline style="display: none;"></video>
-
-
-</body>
-
-</html> {% endcomment %}

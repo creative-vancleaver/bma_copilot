@@ -23,7 +23,7 @@ class RegionImageAdmin(admin.ModelAdmin):
     get_region_id.short_description = 'Region ID'
 
 @admin.register(RegionClassification)
-class RegionClassifcationAmdin(admin.ModelAdmin):
+class RegionClassificationAmdin(admin.ModelAdmin):
 
     list_display = ('id', 'get_region_id', 'classification_score', 'is_selected', 'classifier_id')
     search_fields = ('id', 'region__id', 'is_selected', 'classifier_id')

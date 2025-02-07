@@ -36,31 +36,17 @@ export class UIManager {
 
     initialize(screenShare, cropManager) {
         // Any initial UI setup
-        console.log('crop ', cropManager);
 
         this.elements.recordButton.addEventListener("click", () => {
-            console.log('click');
             this.showConfirmRecordButton();
         });
-
-        // this.elements.confirmRecordButton.addEventListener("click", () => {
-        //     this.startModalPreview(screenShare.stream);
-        // });
 
         this.elements.stopRecordingButton.addEventListener("click", () => {
             screenShare.stopRecording();
             screenShare.stopSharing();
-            // this.closePreviewModal();
         });
 
-        // this.elements.confirmRecordButton.addEventListener("click", () => {
-        //     this.startModalPreview();
-        // });
-
         this.elements.confirmRecordButton.addEventListener("click", () => {
-            console.log('confirmRecordButton ', cropManager);
-            // this.startModalPreview(cropManager, screenShare);
-            // screenShare.startRecording(screenShare.stream);
             screenShare.startRecording();
             this.lockToPreviewArea();
             this.toggleRecordButton();
@@ -84,7 +70,7 @@ export class UIManager {
         const marginTop = parseFloat(computedStyle.marginTop) || 0;
         const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
 
-        return rect.top + window.scrollY - navbarHeight - marginTop - paddingTop - 10; // INCLUDES BUFFER
+        return rect.top + window.scrollY - navbarHeight - marginTop - paddingTop;
 
     }
 
@@ -99,12 +85,9 @@ export class UIManager {
     }
 
     updateConfirmRecordButton() {
-
         this.elements.confirmRecordButton.style.cursor = 'pointer';
         this.elements.confirmRecordButton.style.opacity = 1;
         this.elements.confirmRecordButton.disabled = false;
-
-        // this.startModalPreview(this.screenShare.stream);
     }
 
     lockToPreviewArea() {
@@ -119,12 +102,6 @@ export class UIManager {
     }
 
     toggleRecordButton() {
-        // this.elements.recordButton.innerHTML = `
-        //     <svg class="icon" viewBox="0 0 24 24">
-        //         <rect x="6" y="6" width="12" height="12"/>
-        //     </svg>
-        //     Stop Recording
-        // `;
         this.elements.confirmRecordButton.style.display = "none";
         this.recording = true;
     }
@@ -132,18 +109,11 @@ export class UIManager {
     resetDisplay() {
         this.elements.cropOverlay.style.border = "none";
         this.elements.confirmRecordButton.style.display = "none";
-        // this.elements.recordButton.innerHTML = `
-        //     <svg class="icon" viewBox="0 0 24 24">
-        //         <circle cx="12" cy="12" r="8"/>
-        //     </svg>
-        //     Start Recording
-        // `;
         this.recording = false;
         this.updateStatus('Recording stopped');
     }
 
     updateStatus(message) {
-        console.log(message);
         this.elements.statusDiv.textContent = message;
     }
 

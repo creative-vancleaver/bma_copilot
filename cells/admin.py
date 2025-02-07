@@ -5,12 +5,16 @@ from .models import Cell, CellDetection, CellClassification
 @admin.register(Cell)
 class CellAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'get_region_id', 'image')
+    list_display = ('id', 'get_region_id', 'get_case_id', 'image')
     search_fields = ('id', 'region__id')
 
     def get_region_id(self, obj):
         return obj.region_id
     get_region_id.short_description = "Region ID"
+
+    def get_case_id(self, obj):
+        return obj.region.case_id
+    get_case_id.short_description = 'Case ID'
 
 @admin.register(CellDetection)
 class CellDetectionAdmin(admin.ModelAdmin):
