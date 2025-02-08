@@ -1,26 +1,11 @@
+{% extends 'core/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html>
+{% block head %}
+    <script type="module" src="{% static 'core/js/main.js' %}"></script>
+{% endblock head %}
 
-
-<head>
-    <title>BMACopilot - Smart Screen Capture Prototype</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
-</head>
-
-<body>
-    <nav class="navbar">
-        <div class="nav-content">
-            <div class="nav-brand">
-                <img src="/static/images/logo.png" alt="BMACopilot Logo" class="logo">
-                <span class="brand-name">BMACopilot</span>
-            </div>
-        </div>
-    </nav>
-
-    <main class="app-container">
+    {% block content %}
         <header class="app-header">
             <h1>BMACopilot - Smart Screen Capture Prototype</h1>
             <p class="app-description">
@@ -34,7 +19,7 @@
             </p>
         </header>
 
-        <div class="status-panel">
+        <div id="statusPanel" class="status-panel">
             <div class="status-container">
                 <div id="recordingIndicator" class="recording-indicator"></div>
                 <div id="status" class="status-message">Ready to share</div>
@@ -42,7 +27,7 @@
             <div id="dimensions" class="dimensions-info">Resolution: Not sharing</div>
         </div>
 
-        <div class="control-panel">
+        <div id="controlPanel" class="control-panel">
             <button id="shareButton" class="btn btn-primary">
                 <svg class="icon" viewBox="0 0 24 24">
                     <path d="M16 8v-4l8 8-8 8v-4h-8v-8h8zm-16-6v20h14v-2h-12v-16h12v-2h-14z"/>
@@ -61,6 +46,21 @@
                 </svg>
                 Reset Selection
             </button>
+
+            <button id="recordButton" class="btn btn-primary" style="display: none;">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8"/>
+                </svg>
+                Start Recording
+            </button>
+
+            <button id="confirmRecordButton" class="btn btn-primary" style="display: none;">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M9 16.2l-5.5-5.5-1.5 1.5 7 7 12-12-1.5-1.5z"/>
+                </svg>
+                Confirm Record
+            </button>
+        
         </div>
 
         <div class="content-container">
@@ -73,17 +73,21 @@
                 </div>
             </div>
 
-            <div class="preview-pane">
+            <div id="previewPane" class="preview-pane">
                 <div class="preview-header">
                     <h3>Live Preview</h3>
-                    <span class="preview-subtitle">Real-time view of captured whole slide image regions </span>
+                    <span class="preview-subtitle">Real-time view of captured whole slide image regions</span>
+                    <span class='stop-record'>
+                        <button id="stopRecordingButton" class="btn btn-danger" style="display: none;">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 6h12v12h-12z"/>
+                            </svg>
+                            Stop Recording
+                        </button>
+                    </span>
                 </div>
                 <canvas id="previewCanvas"></canvas>
             </div>
+
         </div>
-    </main>
-
-    <script type="module" src="{% static 'js/main.js' %}"></script>
-</body>
-
-</html>
+    {% endblock content %}

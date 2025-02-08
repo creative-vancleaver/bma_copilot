@@ -1,7 +1,12 @@
 from django.urls import path
 
-from .views import index
+from . import views
 
 urlpatterns = [
-    path('', index, name='home'),
+    
+    # FRONT URLS
+    path('', views.index, name='home'),
+
+    path('case/<int:case_id>/', views.case, name="case"),
+
 ]

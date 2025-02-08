@@ -45,11 +45,11 @@ INSTALLED_APPS = [
 
     'core',
     'users',
+    
     'cases',
     'regions',
     'cells',
-    'detection',
-    'classification',
+
 ]
 
 MIDDLEWARE = [
@@ -92,7 +92,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -140,9 +139,10 @@ AUTH_USER_MODEL = 'users.User'
 #####
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static', # LOCAL STATIC FILES
-]
+# STATICFILES_DIRS = [
+#     # BASE_DIR / 'static', # LOCAL STATIC FILES
+#     os.path.join(BASE_DIR, 'core/static')
+# ]
 STATIC_ROOT = BASE_DIR / 'staticfiles' # WHERE DJANGO COLLECTS STATIC FILES
 
 
@@ -177,9 +177,10 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # Ensure your SECRET_KEY is properly set
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Ensures the token is sent with 'Bearer'
 }
-
 # CELERY TASK CONFIG
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
