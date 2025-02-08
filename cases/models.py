@@ -13,7 +13,12 @@ def case_video_path(instance, filename):
     current_time = datetime.now(pst)
     timestamp = current_time.strftime("%Y%m%d-%H%M%S")
 
-    filename = f"recording_{ timestamp }.webm"
+    user_id = instance.case.user.id
+    case_id = instance.case.id
+    video_id = instance.id
+
+    # filename = f"recording_{ timestamp }.webm"
+    filename = f"{user_id}_{case_id}_{video_id}.webm"
 
     return os.path.join("cases", str(instance.case.id), "recordings", filename)
 
@@ -48,6 +53,7 @@ class Video(models.Model):
 
     case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="videos")
     video_file = models.FileField(upload_to=case_video_path, blank=True, null=True)
+    azure_url = models.URLField(max_length=500, blank=True, null=True) # TEMPORARY?
     date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

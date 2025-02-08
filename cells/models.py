@@ -8,10 +8,17 @@ from regions.models import Region
 
 def cell_image_path(instance, filename):
 
-    pst = pytz.timezone('America/Los_Angeles')
-    current_time = datetime.now(pst)
-    timestamp = current_time.strftime("%Y%m%d-%H%M%S")
-    filename = f"cell_{ instance.id }.jpg"
+    # pst = pytz.timezone('America/Los_Angeles')
+    # current_time = datetime.now(pst)
+    # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
+    # filename = f"cell_{ instance.id }.jpg"
+
+    user_id = instance.region.case.user.id
+    case_id = instance.region.case.id
+    region_id = instance.region.id
+    cell_id = instance.id
+
+    filename = f"{user_id}_{case_id}_{region_id}_{cell_id}.jpg"
 
     return os.path.join(
         "cases", 

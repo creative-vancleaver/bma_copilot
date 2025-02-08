@@ -21,6 +21,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Case, Video
 from .serializers import CaseSerializer
+from .utils import upload_to_azure_blob
 
 class CaseViewSet(viewsets.ModelViewSet):
     
@@ -55,10 +56,25 @@ def save_recording(request, case_id):
         video_file = request.FILES["video"]
 
         case = Case.objects.get(id=case_id)
+        new_video = Video.objects.create(case=case)
         
         # INITIALIZE NEW VIDEO OBJECT
-        new_video = Video(case=case)
-        new_video.video_file.save(video_file.name, video_file)
+        # UNIQUE FILENAME
+        pst = pytz.timezone('America/Los_Angeles')
+        current_time = datetime.now(pst)
+        timestamp = current_time.strftime("%Y%m%d-%H%M%S")
+        # filename = f"recording_{ timestamp }.webm"
+        user_id = case.user.id
+        video_id = new_video.id
+        filename = f"{user_id}_{case.id}_{video_id}.webm"
+
+        # UPLOAD TO AZURE BLOB STORAGE
+        blob_url = upload_to_azure_blob(video_file, f"cases/{case_id}/recordings/{filename}")
+
+        # SAVE FILE TO VIDEO OBJECT
+        # new_video = Video(case=case)
+        new_video.video_file.name = f"cases/{case_id}/recordings/{filename}"
+        new_video.azure_url = blob_url
         new_video.save()
 
         return JsonResponse({

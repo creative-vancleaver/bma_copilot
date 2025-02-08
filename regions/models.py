@@ -10,10 +10,15 @@ from cases.models import Case, Video
 def region_image_path(instance, filename):
     # region_folder = sanitize_name(instance.name)
     # return os.path.join(region_folder)
-    pst = pytz.timezone('America/Los_Angeles')
-    current_time = datetime.now(pst)
-    timestamp = current_time.strftime("%Y%m%d-%H%M%S")
-    filename = f"region_{ instance.region.id }.jpg"
+    # pst = pytz.timezone('America/Los_Angeles')
+    # current_time = datetime.now(pst)
+    # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
+    # filename = f"region_{ instance.region.id }.jpg"
+    user_id = instance.region.case.user.id
+    case_id = instance.region.case.id
+    region_id = instance.region.id
+
+    filename = f"{user_id}_{case_id}_{region_id}.jpg"
 
     return os.path.join("cases", str(instance.region.case.id), "regions", str(instance.region.id), filename)
     
