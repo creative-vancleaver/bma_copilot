@@ -77,6 +77,8 @@ def save_recording(request, case_id):
         new_video.azure_url = blob_url
         new_video.save()
 
+        print('new video: ', new_video.video_file, new_video.azure_url)
+
         return JsonResponse({
             "success": True,
             "case": case.id,

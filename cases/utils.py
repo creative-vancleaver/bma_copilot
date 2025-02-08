@@ -9,6 +9,10 @@ def upload_to_azure_blob(file_obj, filename):
     Returns URL of uploaded blob
     """
 
+    if settings.DEBUG and getattr(settings, 'SKIP_AZURE_UPLOAD', False):
+        # RETURN FAKE URL FOR DEV TESTING
+        return f"https://fake-azure-url.com/{filename}"
+
     try:
 
         connection_string = settings.AZURE_STORAGE_CONNECTION_STRING
