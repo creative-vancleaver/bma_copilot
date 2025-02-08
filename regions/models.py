@@ -24,7 +24,7 @@ class Region(models.Model):
     time_stamp = models.DateTimeField(blank=True, null=True)
     TL_x_in_frame = models.FloatField(blank=True, null=True)
     TL_y_in_frame = models.FloatField(blank=True, null=True)
-    BR_x_in_frame =  models.FloatField(blank=True, null=True)
+    BR_x_in_frame = models.FloatField(blank=True, null=True)
     BR_y_in_frame = models.FloatField(blank=True, null=True)
 
     group_id = models.IntegerField(blank=True, null=True)
@@ -50,7 +50,7 @@ class RegionClassification(models.Model):
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="classification")
     classification_score = models.FloatField(blank=True, null=True)
     is_selected = models.BooleanField(default=False)
-    classifier_id = models.IntegerField(blank=True, null=True)
+    classifier_id = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"Region { self.region.id } Classification { self.region_classification_score }"

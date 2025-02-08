@@ -45,7 +45,7 @@ class CellDetection(models.Model):
 
     cell = models.OneToOneField(Cell, on_delete=models.CASCADE, related_name="detection")
     detection_score = models.FloatField(blank=True, null=True)
-    model_id = models.IntegerField(blank=True, null=True)
+    model_id = models.CharField(max_length=100, blank=True, null=True)
     is_user_added = models.BooleanField(default=False)
 
     def __str__(self):
@@ -68,9 +68,10 @@ class CellClassification(models.Model):
     blast_score = models.FloatField(blank=True, null=True)
     skippocyte_score = models.FloatField(blank=True, null=True)
 
+    model_id = models.CharField(max_length=100, blank=True, null=True)
+
     basophil_score = models.FloatField(blank=True, null=True)
 
-    model_id = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"Cell { self.cell.id } Classification"
