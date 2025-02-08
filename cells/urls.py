@@ -1,11 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .import views
+from . import views
 
 router = DefaultRouter()
-# API VIEWS IF/WHEN NEEDED
-# router.register(r'', views.CellViewSet)
+# REGISTER CELLS API VIEW AT /api/cells/
+router.register(r'', views.CellViewSet, basename='cell')
 
 urlpatterns = [
     path('', include(router.urls)),

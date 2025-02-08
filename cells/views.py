@@ -5,17 +5,64 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Cell, CellDetection, CellClassification
+from .serializers import CellSerializer, CellDetectionSerializer, CellClassificationSerializer
 
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 CELL_ORDER = [
     'blast', 'promyelocyte', 'myelocyte', 'metamyelocyte', 'neutrophil', 'monocyte', 'eosinophil', 
     'basophil', 'lymphocyte', 'plasma-cell', 'erythroid-precursor', 'skippocyte', 'unclassified'
 ]
+
+class CellViewSet(viewsets.ModelViewSet):
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    queryset = Cell.objects.all().order_by('-id')
+    serializer_class = CellSerializer
+
+    def get_queryset(self):
+        return Cell.objects.select_related(
+            'region',
+            'region__case',
+            'detection',
+            'classification'
+        ).all().order_by('-id')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    # GET DETECTION DETAILS @ cell/<cell_id>/detection_details
+    @action(detail=True, methods=['get'])
+    def detection_details(self, request, pk=None):
+        cell = self.get_object()
+        if not hasattr(cell, 'detection') or cell.detection is None:
+            return Response({
+                "success": False,
+                "message": "No detection data available for this cell."
+            }, status=status.HTTP_404_NOT_FOUND)
+        serializer = CellDetectionSerializer(cell.detection)
+        return Response(serializer.data)
+
+    # GET CLASSIFICATION DETAILS @ cell/<cell_id>/classification_details
+    @action(detail=True, methods=['get'])
+    def classification_details(self, request, pk=None):
+        cell = self.get_object()
+        if not hasattr(cell, 'classification') or cell.classification is None:
+            return Response({
+                "success": False,
+                "message": "No classification data available for this cell."
+            }, status=status.HTTP_404_NOT_FOUND)
+        serializer = CellClassificationSerializer(cell.classification)
+        return Response(serializer.data)
 
 class LabelCellView(APIView):
     authentication_classes = [JWTAuthentication]  # Ensure only JWT auth is used

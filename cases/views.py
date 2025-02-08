@@ -16,19 +16,21 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.shortcuts import render
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
-
-from cells.models import Cell, CellClassification
-from cells.views import DifferentialCountView, CellStatsView
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Case, Video
 from .serializers import CaseSerializer
 
 class CaseViewSet(viewsets.ModelViewSet):
     
-    queryset = Case.objects.all()
+    # TEMP DISABLE AUTH FOR THIS VIEW
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+    
+    queryset = Case.objects.all().order_by('id')
     serializer_class = CaseSerializer
-    permission_classes = [IsAuthenticated]
 
 
 os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=True)

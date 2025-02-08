@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+
 from rest_framework_simplejwt.views import(
     TokenObtainPairView,
     TokenRefreshView,
@@ -20,6 +21,7 @@ urlpatterns = [
 
     # API PATHS
     path('api/cases/', include('cases.urls')),
+    path('api/regions/', include('regions.urls')),
     path('api/cells/', include('cells.urls')),
 ]
 

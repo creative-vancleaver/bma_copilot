@@ -177,9 +177,10 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # Ensure your SECRET_KEY is properly set
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Ensures the token is sent with 'Bearer'
 }
-
 # CELERY TASK CONFIG
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
