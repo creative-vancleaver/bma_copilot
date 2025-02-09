@@ -1,3 +1,5 @@
+import { uploadState, updateProgressBar } from './uploadState.js';
+
 export class ScreenShare {
 
     constructor(uiManager) {
@@ -255,22 +257,68 @@ export class ScreenShare {
         const formData = new FormData();
         formData.append("video", blob, 'screen-recording.webm');
 
+        // RESET UPLOAD STATE
+        uploadState.progress = 0;
+        uploadState.status = 'uploading';
+        uploadState.error = null;
+        updateProgressBar();
+
         // TEST CASE
         let case_id = 1;
 
-        fetch(`/api/cases/${ case_id }/save-recording/`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                this.uiManager.updateStatus(`Recording saved.`);
-            } else {
-                console.error('Upload failed: ', data.error);
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `/api/cases/${ case_id }/save-recording/`, true);
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event/total) * 100);
+                uploadState.progress = percentComplete;
+                updateProgressBar();
             }
-        })
-        .catch(error => console.log('Upload error: ', error));
+        };
+
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    upload.status = 'completed';
+                    this.uiManager.updateStatus('Recording saved.');
+                } else {
+                    uploadState.status = 'error';
+                    uploadState.error = response.error || 'Upload failed.';
+                    console.log('Upload failed: ', response.error);
+                }
+            } else {
+                uploadState.status = 'error';
+                uploadState.error = 'Server Error';
+                console.log('upload failed: server returned status ', xhr.status);
+            }
+            updateProgressBar();
+        };
+
+        xhr.onerror = () => {
+            uploadState.status = 'error';
+            uploadState.error = 'Network Error';
+            updateProgressBar();
+            console.log('Upload error: network failure.');
+        };
+
+        xhr.send(formData);
+
+
+        // fetch(`/api/cases/${ case_id }/save-recording/`, {
+        //     method: 'POST',
+        //     body: formData
+        // })
+        // .then(response => response.json())
+        // .then(data => {
+        //     if (data.success) {
+        //         this.uiManager.updateStatus(`Recording saved.`);
+        //     } else {
+        //         console.error('Upload failed: ', data.error);
+        //     }
+        // })
+        // .catch(error => console.log('Upload error: ', error));
 
     }
 

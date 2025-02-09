@@ -276,6 +276,19 @@ video#sharedScreen {
     animation: pulse 2s infinite;
 }
 
+.recording-indicator.uploading {
+    background-color: #ffd700;  /* Yellow for uploading */
+    animation: pulse 1s infinite;
+}
+
+.recording-indicator.success {
+    background-color: #4CAF50;  /* Green for success */
+}
+
+.recording-indicator.error {
+    background-color: #f44336;  /* Red for error */
+}
+
 @keyframes pulse {
     0% {
         transform: scale(1);

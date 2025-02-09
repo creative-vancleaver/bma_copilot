@@ -1,6 +1,7 @@
 import { ScreenShare } from './screenShare.js';
 import { CropManager } from './cropManager.js';
 import { UIManager } from './uiManager.js';
+import { uploadState } from './uploadState.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const uiManager = new UIManager();

@@ -105,8 +105,10 @@ class LabelCellView(APIView):
 
 class CellStatsView(APIView):
 
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
     def get_cell_counts(self, case_id):
 
