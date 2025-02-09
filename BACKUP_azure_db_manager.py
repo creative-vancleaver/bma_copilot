@@ -5,6 +5,8 @@ import os
 import pandas as pd
 import logging
 
+from decouple import config
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -16,10 +18,10 @@ class DatabaseManager:
     """
     DatabaseManager class for Azure SQL Database operations
     """
-    def __init__(self, server: str = 'bmacopilotv1-sql-entra.database.windows.net',
-                 database: str = 'BMACopilotV1DB',
-                 username: str = 'bmacopilotv1-admin',
-                 password: str = 'gregLV1!',
+    def __init__(self, server: str = config('AZURE_SERVER'),
+                 database: str = config('AZURE_DATABASE'),
+                 username: str = config('AZURE_USERNAME'),
+                 password: str = config('AZURE_PASSWORD'),
                  driver: str = 'ODBC Driver 18 for SQL Server'):
         """
         Initialize database connection using Azure SQL credentials
