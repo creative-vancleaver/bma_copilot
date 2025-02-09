@@ -31,4 +31,4 @@ video_upload/
 scripts/
 cell_classifications.json
 cells/management/
-azure_db_manager.py
+# azure_db_manager.py
