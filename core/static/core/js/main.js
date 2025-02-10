@@ -11,5 +11,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the application
     uiManager.initialize(screenShare, cropManager);
     screenShare.initialize();
-    cropManager.initialize();
+    cropManager.initialize(screenShare);
 });

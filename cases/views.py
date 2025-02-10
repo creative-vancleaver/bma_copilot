@@ -6,8 +6,8 @@ import time
 import random
 import copy
 from collections import defaultdict
-
 from datetime import datetime
+from decouple import config
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -22,6 +22,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Case, Video
 from .serializers import CaseSerializer
 from .utils import upload_to_azure_blob
+from cells.services.azure_service import CaseAzureService
+
+USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False') == 'True'
 
 class CaseViewSet(viewsets.ModelViewSet):
     
@@ -30,15 +33,40 @@ class CaseViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
     
-    queryset = Case.objects.all().order_by('id')
+    queryset = Case.objects.all().order_by('case_id')
     serializer_class = CaseSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        print('use azure services ', USE_AZURE_SERVICES)
+        
+        # Only sync with Azure if enabled
+        if USE_AZURE_SERVICES:
+            azure_service = CaseAzureService()
+            for case in queryset:
+                azure_service.sync_case(str(case.id))
+            
+        return queryset
+
+    def perform_create(self, serializer):
+        case = serializer.save()
+        
+        # Only sync with Azure if enabled
+        if USE_AZURE_SERVICES:
+            azure_service = CaseAzureService()
+            azure_service.azure_db.create_case(
+                case_id=str(case.id),
+                case_name=case.name,
+                case_description=case.description,
+                case_date=case.date.strftime('%Y-%m-%d'),
+                case_time=case.time.strftime('%H:%M:%S'),
+                user_id=str(case.user.id)
+            )
 
 os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=True)
 
 @csrf_exempt # EXEMPT IN DEV ONLY
 def save_recording(request, case_id):
-
     if request.method != 'POST':
         return JsonResponse({
             "success": False,
@@ -46,7 +74,6 @@ def save_recording(request, case_id):
         }, status=400)
     
     try:
-
         if "video" not in request.FILES:
             return JsonResponse({
                 "success": False,
@@ -54,39 +81,74 @@ def save_recording(request, case_id):
             }, status=400)
         
         video_file = request.FILES["video"]
-
         case = Case.objects.get(id=case_id)
-        new_video = Video.objects.create(case=case)
         
-        # INITIALIZE NEW VIDEO OBJECT
-        # UNIQUE FILENAME
+        # Generate a unique ID for the video
         pst = pytz.timezone('America/Los_Angeles')
         current_time = datetime.now(pst)
-        timestamp = current_time.strftime("%Y%m%d-%H%M%S")
-        # filename = f"recording_{ timestamp }.webm"
-        user_id = case.user.id
-        video_id = new_video.id
-        filename = f"{user_id}_{case.id}_{video_id}.webm"
+        video_id = f"vid_{current_time.strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
+        
+        # Create video object with generated ID
+        new_video = Video.objects.create(
+            id=video_id,
+            case=case
+        )
+        
+        # Generate filename and path
+        filename = f"{case.user.id}_{case.id}_{video_id}.webm"
+        file_path = f"cases/{case_id}/recordings/{filename}"
 
-        # UPLOAD TO AZURE BLOB STORAGE
-        blob_url = upload_to_azure_blob(video_file, f"cases/{case_id}/recordings/{filename}")
+        try:
+            if USE_AZURE_SERVICES:
+                # Upload to Azure Blob Storage
+                blob_url = upload_to_azure_blob(video_file, file_path)
+                new_video.azure_url = blob_url
+                new_video.video_file_path = file_path
+                
+                # Sync with Azure DB
+                azure_service = CaseAzureService()
+                azure_service.azure_db.add_video(
+                    video_id=video_id,
+                    video_file_path=file_path,
+                    case_id=str(case_id)
+                )
+            else:
+                # Save locally
+                local_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                
+                with open(local_path, 'wb+') as destination:
+                    for chunk in video_file.chunks():
+                        destination.write(chunk)
+                
+                new_video.video_file_path = file_path
 
-        # SAVE FILE TO VIDEO OBJECT
-        # new_video = Video(case=case)
-        new_video.video_file.name = f"cases/{case_id}/recordings/{filename}"
-        new_video.azure_url = blob_url
-        new_video.save()
+            # Update video object
+            new_video.video_file.name = file_path
+            new_video.save()
 
-        print('new video: ', new_video.video_file, new_video.azure_url)
-
+            return JsonResponse({
+                "success": True,
+                "case": case.id,
+                "video_id": video_id,
+                "filename": new_video.video_file.name,
+                "url": new_video.azure_url if USE_AZURE_SERVICES else new_video.video_file.url
+            })
+            
+        except Exception as storage_error:
+            # If storage fails, delete the video object
+            new_video.delete()
+            raise storage_error
+            
+    except Case.DoesNotExist:
         return JsonResponse({
-            "success": True,
-            "case": case.id,
-            "filename": new_video.video_file.name,
-            "url": new_video.video_file.url
-        })
-    
+            "success": False,
+            "error": f"Case with ID {case_id} not found"
+        }, status=404)
     except Exception as e:
+        import traceback
+        print(f"Error in save_recording: {str(e)}")
+        print(traceback.format_exc())
         return JsonResponse({
             "success": False,
             "error": str(e)

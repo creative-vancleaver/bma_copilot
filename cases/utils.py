@@ -2,16 +2,20 @@ from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import ResourceExistsError
 from django.conf import settings
 
+from decouple import config
+
 def upload_to_azure_blob(file_obj, filename):
+    print("upload_to_azure_blob called", config('USE_AZURE_STORAGE', default=False))  # Debug print statement
 
     """
     Upload file to Azure Blob Storage
     Returns URL of uploaded blob
     """
 
-    if settings.DEBUG and getattr(settings, 'SKIP_AZURE_UPLOAD', False):
+    if config('USE_AZURE_STORAGE', default=False) == 'False':
         # RETURN FAKE URL FOR DEV TESTING
-        return f"https://fake-azure-url.com/{filename}"
+        print("DEBUG MODE: Skipping Azure Upload")
+        return f"http://fake-azure-url.com/video.webm"
 
     try:
 

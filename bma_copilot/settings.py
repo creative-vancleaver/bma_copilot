@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+import sys
 
 from decouple import config
 
@@ -87,13 +88,44 @@ WSGI_APPLICATION = 'bma_copilot.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+USE_AZURE_DB = config('USE_AZURE_DB', default='True') == 'True'
+print('use_azure_db ', USE_AZURE_DB)
+if (config('USE_AZURE_DB') == 'True'):
+    print('Azure SQL')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mssql',
+            'NAME': config('AZURE_DATABASE'),
+            'USER': config('AZURE_USERNAME'),
+            'PASSWORD': config('AZURE_PASSWORD'),
+            'HOST': config('AZURE_SERVER'),
+            'PORT': config('AZURE_PORT'),
+            'OPTIONS': {
+                'driver': 'ODBC Driver 18 for SQL Server',
+                'unicode_results': True,
+                'host_is_server': True,
+                'extra_params': 'TrustServerCertificate=yes;',
+                'isolation_level': 'READ COMMITTED',
+            },
+        }
     }
-}
+else:
+    print('SQLite')
+    print(config('USE_AZURE_DB'))
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test_db.sqlite3',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

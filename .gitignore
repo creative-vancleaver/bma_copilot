@@ -32,3 +32,4 @@ scripts/
 cell_classifications.json
 cells/management/
 # azure_db_manager.py
+create_azure_db.py

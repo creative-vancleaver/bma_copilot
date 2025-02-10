@@ -23,9 +23,9 @@ def region_image_path(instance, filename):
     return os.path.join("cases", str(instance.region.case.id), "regions", str(instance.region.id), filename)
     
 class Region(models.Model):
-
-    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="regions")
-    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='regions', blank=True, null=True)
+    region_id = models.CharField(primary_key=True, max_length=255)  # Match Azure's region_id
+    case = models.ForeignKey(Case, db_column='case_id', to_field='case_id', on_delete=models.CASCADE, related_name="regions")
+    video = models.ForeignKey(Video, db_column='video_id', to_field='video_id', on_delete=models.CASCADE, null=True, blank=True)
     time_stamp = models.DateTimeField(blank=True, null=True)
     TL_x_in_frame = models.FloatField(blank=True, null=True)
     TL_y_in_frame = models.FloatField(blank=True, null=True)
@@ -38,26 +38,38 @@ class Region(models.Model):
         return f"Region: { self.id } - Case { self.case.name }"
     
     class Meta:
+        # managd = False
+        db_table = 'region'  # Match Azure table name (note: singular as per your schema)
         indexes = [
             models.Index(fields=['case'])
         ]
     
 class RegionImage(models.Model):
-
-    region = models.OneToOneField(Region, on_delete=models.CASCADE, related_name="image")
+    region = models.OneToOneField(Region, db_column='region_id', to_field='region_id', primary_key=True, on_delete=models.CASCADE)
+    region_image_path = models.CharField(max_length=255, blank=True, null=True)  # Make nullable
     image = models.ImageField(upload_to=region_image_path, blank=True, null=True)
 
     def __str__(self):
         return f"Region Image { self.region.id }"
     
+    class Meta:
+        # managd = False
+        db_table = 'region_image_selected'  # Match Azure table name
+    
 class RegionClassification(models.Model):
 
-    region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="classification")
-    classification_score = models.FloatField(blank=True, null=True)
-    is_selected = models.BooleanField(default=False)
-    classifier_id = models.CharField(max_length=100, blank=True, null=True)
+    region = models.OneToOneField(
+        Region, db_column='region_id', to_field='region_id',
+        primary_key=True, on_delete=models.CASCADE
+    )
+    region_classification_score = models.FloatField(blank=True, null=True)
+    is_selected_by_region_classifier = models.BooleanField(default=False)
+    region_classifier_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"Region { self.region.id } Classification { self.region_classification_score }"
         
+    class Meta:
+        # managd = False
+        db_table = 'region_classification'  # Match Azure table name
     

@@ -3,6 +3,8 @@ from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+import pandas as pd
+from decouple import config
 
 from .models import Cell, CellDetection, CellClassification
 from .serializers import CellSerializer, CellDetectionSerializer, CellClassificationSerializer
@@ -13,27 +15,34 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from cells.services.azure_service import CellAzureService
 
 CELL_ORDER = [
     'blast', 'promyelocyte', 'myelocyte', 'metamyelocyte', 'neutrophil', 'monocyte', 'eosinophil', 
     'basophil', 'lymphocyte', 'plasma-cell', 'erythroid-precursor', 'skippocyte', 'unclassified'
 ]
 
+USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False') == 'True'
+
 class CellViewSet(viewsets.ModelViewSet):
 
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    queryset = Cell.objects.all().order_by('-id')
+    queryset = Cell.objects.all().order_by('-cell_id')
     serializer_class = CellSerializer
 
     def get_queryset(self):
-        return Cell.objects.select_related(
-            'region',
-            'region__case',
-            'detection',
-            'classification'
-        ).all().order_by('-id')
+        queryset = super().get_queryset()
+        
+        # Only sync with Azure if enabled
+        if USE_AZURE_SERVICES:
+            azure_service = CellAzureService()
+            for cell in queryset:
+                azure_service.sync_cell_classification(str(cell.id))
+                azure_service.sync_cell_detection(str(cell.id))
+            
+        return queryset
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -91,6 +100,15 @@ class LabelCellView(APIView):
             if not created:
                 cell_class.user_class = user_label
                 cell_class.save()
+
+            # Sync to Azure DB after updating Django DB
+            azure_service = CellAzureService()
+            azure_service.azure_db.add_cell_classifications_from_df(pd.DataFrame([{
+                'cell_id': str(cell.id),
+                'ai_cell_class': None,
+                'user_cell_class': user_label,
+                # ... other fields set to None ...
+            }]))
 
             return Response({
                 "success": True,

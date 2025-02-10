@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 from django.db.models import F
 from django.shortcuts import render
@@ -54,20 +53,20 @@ def case(request, case_id):
         Cell.objects
         .filter(region__case=case)
         .annotate(
-            ai_class=F("classification__ai_class"),
-            user_class=F("classification__user_class"),
+            ai_class=F("cellclassification__ai_class"),
+            user_class=F("cellclassification__user_class"),
             # image_url=F("image"),  # Ensure image URL is included
-            myelocyte_score=F("classification__myelocyte_score"),
-            metamyelocyte_score=F("classification__metamyelocyte_score"),
-            neutrophil_score=F("classification__neutrophil_score"),
-            monocyte_score=F("classification__monocyte_score"),
-            eosinophil_score=F("classification__eosinophil_score"),
-            erythroid_precursor_score=F("classification__erythroid_precursor_score"),
-            lymphocyte_score=F("classification__lymphocyte_score"),
-            plasma_cell_score=F("classification__plasma_cell_score"),
-            blast_score=F("classification__blast_score"),
-            skippocyte_score=F("classification__skippocyte_score"),
-            basophil_score=F("classification__basophil_score"),
+            myelocyte_score=F("cellclassification__myelocyte_score"),
+            metamyelocyte_score=F("cellclassification__metamyelocyte_score"),
+            neutrophil_score=F("cellclassification__neutrophil_score"),
+            monocyte_score=F("cellclassification__monocyte_score"),
+            eosinophil_score=F("cellclassification__eosinophil_score"),
+            erythroid_precursor_score=F("cellclassification__erythroid_precursor_score"),
+            lymphocyte_score=F("cellclassification__lymphocyte_score"),
+            plasma_cell_score=F("cellclassification__plasma_cell_score"),
+            blast_score=F("cellclassification__blast_score"),
+            skippocyte_score=F("cellclassification__skippocyte_score"),
+            basophil_score=F("cellclassification__basophil_score"),
         )
         .values(
             "id", "image", "ai_class", "user_class",
@@ -124,4 +123,8 @@ def case(request, case_id):
     }
 
     return render (request, 'cases/case.html', context)
+
+
+def preview_popup(request):
+    return render(request, 'core/preview_popup.html')
 
