@@ -74,7 +74,7 @@ class Video(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Video for Case: { self.case.csse_name }"
+        return f"Video for Case: { self.case.case_name }"
 
     class Meta:
         # managd = False

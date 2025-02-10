@@ -280,6 +280,7 @@ export class ScreenShare {
         xhr.onload = () => {
             if (xhr.status === 200) {
                 const response = JSON.parse(xhr.responseText);
+                console.log('saveRecording response', response);
                 if (response.success) {
                     upload.status = 'completed';
                     this.uiManager.updateStatus('Recording saved.');

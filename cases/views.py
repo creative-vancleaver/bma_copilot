@@ -24,6 +24,7 @@ from .serializers import CaseSerializer
 from .utils import upload_to_azure_blob
 from cells.services.azure_service import CaseAzureService
 
+USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='False') == 'True'
 USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False') == 'True'
 
 class CaseViewSet(viewsets.ModelViewSet):
@@ -81,7 +82,8 @@ def save_recording(request, case_id):
             }, status=400)
         
         video_file = request.FILES["video"]
-        case = Case.objects.get(id=case_id)
+        print('video_file ', video_file)
+        case = Case.objects.get(case_id=case_id)
         
         # Generate a unique ID for the video
         pst = pytz.timezone('America/Los_Angeles')
@@ -90,16 +92,16 @@ def save_recording(request, case_id):
         
         # Create video object with generated ID
         new_video = Video.objects.create(
-            id=video_id,
+            video_id=video_id,
             case=case
         )
         
         # Generate filename and path
-        filename = f"{case.user.id}_{case.id}_{video_id}.webm"
+        filename = f"{case.user.user_id}_{case.case_id}_{video_id}.webm"
         file_path = f"cases/{case_id}/recordings/{filename}"
 
         try:
-            if USE_AZURE_SERVICES:
+            if USE_AZURE_STORAGE:
                 # Upload to Azure Blob Storage
                 blob_url = upload_to_azure_blob(video_file, file_path)
                 new_video.azure_url = blob_url
@@ -124,15 +126,16 @@ def save_recording(request, case_id):
                 new_video.video_file_path = file_path
 
             # Update video object
-            new_video.video_file.name = file_path
-            new_video.save()
+            # new_video.video_file.name = file_path
+            # new_video.save()
 
             return JsonResponse({
                 "success": True,
-                "case": case.id,
+                "case": case.case_id,
                 "video_id": video_id,
-                "filename": new_video.video_file.name,
-                "url": new_video.azure_url if USE_AZURE_SERVICES else new_video.video_file.url
+                "filename": filename,
+                "video_file_path": new_video.video_file_path,
+                "url": new_video.azure_url if USE_AZURE_STORAGE else new_video.video_file_path
             })
             
         except Exception as storage_error:
