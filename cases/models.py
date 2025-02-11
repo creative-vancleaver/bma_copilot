@@ -5,7 +5,7 @@ from datetime import datetime
 from django.db import models
 
 from core.utils import sanitize_name
-from users.models import User
+from users.models import User, CustomIDMixin
 
 def case_video_path(instance, filename):
 
@@ -22,7 +22,7 @@ def case_video_path(instance, filename):
 
     return os.path.join("cases", str(instance.case.id), "recordings", filename)
 
-class Case(models.Model):
+class Case(CustomIDMixin, models.Model):
 
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -40,7 +40,7 @@ class Case(models.Model):
     # status = models.CharField(choices=STATUS_CHOICES, max_length=25, default='pending')
     # user = models.ForeignKey(User, db_column='user_id', to_field='id', on_delete=models.CASCADE)
 
-    case_id = models.CharField(primary_key=True, max_length=255)
+    case_id = models.CharField(primary_key=True, max_length=255, unique=True, default=CustomIDMixin.generate_custom_id)
     case_name = models.CharField(max_length=255, blank=True, null=True)
     case_description = models.TextField(blank=True, null=True)  # This field type is a guess.
     case_date = models.DateField(blank=True, null=True)
@@ -59,9 +59,9 @@ class Case(models.Model):
             models.Index(fields=['user'])
         ]
 
-class Video(models.Model):
+class Video(CustomIDMixin, models.Model):
 
-    video_id = models.CharField(primary_key=True, max_length=255)
+    video_id = models.CharField(primary_key=True, max_length=255, unique=True, default=CustomIDMixin.generate_custom_id)
     video_file_path = models.CharField(max_length=255, blank=True, null=True)
     case = models.ForeignKey(Case, on_delete=models.CASCADE, db_column='case_id')
 
@@ -69,9 +69,9 @@ class Video(models.Model):
     # case = models.ForeignKey(Case, db_column='case_id', to_field='case_id', on_delete=models.CASCADE)
     # video_file_path = models.CharField(max_length=255, blank=True, null=True)
 
-    video_file = models.FileField(upload_to=case_video_path, blank=True, null=True)
-    azure_url = models.URLField(max_length=500, blank=True, null=True) # TEMPORARY?
-    date_added = models.DateTimeField(auto_now_add=True)
+    # video_file = models.FileField(upload_to=case_video_path, blank=True, null=True)
+    # azure_url = models.URLField(max_length=500, blank=True, null=True) # TEMPORARY?
+    # date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Video for Case: { self.case.case_name }"

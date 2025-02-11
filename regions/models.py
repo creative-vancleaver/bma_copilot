@@ -6,6 +6,7 @@ from datetime import datetime
 from django.db import models
 
 from cases.models import Case, Video
+from users.models import CustomIDMixin
 
 def region_image_path(instance, filename):
     # region_folder = sanitize_name(instance.name)
@@ -22,10 +23,10 @@ def region_image_path(instance, filename):
 
     return os.path.join("cases", str(instance.region.case.id), "regions", str(instance.region.id), filename)
     
-class Region(models.Model):
-    region_id = models.CharField(primary_key=True, max_length=255)  # Match Azure's region_id
-    case = models.ForeignKey(Case, db_column='case_id', to_field='case_id', on_delete=models.CASCADE, related_name="regions")
-    video = models.ForeignKey(Video, db_column='video_id', to_field='video_id', on_delete=models.CASCADE, null=True, blank=True)
+class Region(CustomIDMixin, models.Model):
+    region_id = models.CharField(primary_key=True, max_length=255, unique=True, default=CustomIDMixin.generate_custom_id)  # Match Azure's region_id
+    case = models.ForeignKey(Case, db_column='case_id', to_field='case_id', on_delete=models.CASCADE, related_name="regions", blank=True, null=True)
+    video_id = models.ForeignKey(Video, db_column='video_id', to_field='video_id', on_delete=models.CASCADE, null=True, blank=True)
     time_stamp = models.DateTimeField(blank=True, null=True)
     TL_x_in_frame = models.FloatField(blank=True, null=True)
     TL_y_in_frame = models.FloatField(blank=True, null=True)
@@ -41,11 +42,12 @@ class Region(models.Model):
         # managd = False
         db_table = 'region'  # Match Azure table name (note: singular as per your schema)
         indexes = [
-            models.Index(fields=['case'])
+            models.Index(fields=['case']),
+            models.Index(fields=['video_id'])
         ]
     
 class RegionImage(models.Model):
-    region = models.OneToOneField(Region, db_column='region_id', to_field='region_id', primary_key=True, on_delete=models.CASCADE)
+    region_id = models.OneToOneField(Region, db_column='region_id', to_field='region_id', primary_key=True, on_delete=models.CASCADE)
     region_image_path = models.CharField(max_length=255, blank=True, null=True)  # Make nullable
     image = models.ImageField(upload_to=region_image_path, blank=True, null=True)
 
@@ -58,7 +60,7 @@ class RegionImage(models.Model):
     
 class RegionClassification(models.Model):
 
-    region = models.OneToOneField(
+    region_id = models.OneToOneField(
         Region, db_column='region_id', to_field='region_id',
         primary_key=True, on_delete=models.CASCADE
     )

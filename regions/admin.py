@@ -5,13 +5,13 @@ from .models import Region, RegionImage, RegionClassification
 @admin.register(Region)
 class RegionAdmin(admin.ModelAdmin):
 
-    list_display = ('region_id', 'get_case_id')
-    search_fields = ('region_id', 'case__case_id')
+    list_display = ('region_id', 'get_video_id')
+    search_fields = ('region_id', 'video_id__video_id')
 
-    def get_case_id(self, obj):
-        return obj.case.case_id
-    get_case_id.short_description = 'Case ID'
-    get_case_id.admin_order_field = 'case__case_id'
+    def get_video_id(self, obj):
+        return obj.video_id.video_id if obj.video_id else None
+    get_video_id.short_description = 'Video ID'
+    get_video_id.admin_order_field = 'video_id__video_id'
 
 @admin.register(RegionImage)
 class RegionImageAdmin(admin.ModelAdmin):
@@ -24,7 +24,7 @@ class RegionImageAdmin(admin.ModelAdmin):
     get_region_id.short_description = 'Region ID'
 
 @admin.register(RegionClassification)
-class RegionClassificationAmdin(admin.ModelAdmin):
+class RegionClassificationAdmin(admin.ModelAdmin):
 
     list_display = ('region_id', 'get_region_id', 'region_classification_score', 'is_selected_by_region_classifier', 'region_classifier_id')
     search_fields = ('region_id', 'region__region_id', 'is_selected_by_region_classifier', 'region_classifier_id')

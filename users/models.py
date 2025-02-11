@@ -85,3 +85,17 @@ class User(AbstractUser):
         app_label = 'users'
         db_table = 'users'  # Match Azure table name
         # # managd = False
+
+class CustomIDMixin(models.Model):
+    id_field = "id"
+
+    @classmethod
+    def generate_custom_id(cls):
+        last_instance = cls.objects.order_by(f"-{cls.id_field}").first()
+        if last_instance and last_instance.id_field.isdigit():
+            return str(int(last_instance.id_field) + 1)
+        return "1"
+    
+    class Meta:
+        abstract = True
+        

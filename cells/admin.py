@@ -21,7 +21,7 @@ class CellAdmin(admin.ModelAdmin):
 @admin.register(CellDetection)
 class CellDetectionAdmin(admin.ModelAdmin):
 
-    list_display = ('get_cell_id', 'detection_score', 'model_id', 'is_user_added')
+    list_display = ('get_cell_id', 'cell_detection_score', 'model_id', 'is_user_added')
     search_fields = ('cell__cell_id',)
 
     def get_cell_id(self, obj):
@@ -32,7 +32,7 @@ class CellDetectionAdmin(admin.ModelAdmin):
 @admin.register(CellClassification)
 class CellClassificationAdmin(admin.ModelAdmin):
 
-    list_display = ('get_cell_id', 'ai_class', 'user_class', 'cell_classification_model_id')
+    list_display = ('get_cell_id', 'ai_cell_class', 'user_cell_class', 'cell_classification_model_id')
     search_fields = ('cell__cell_id', 'cell_classification_model_id')
 
     def get_cell_id(self, obj):
