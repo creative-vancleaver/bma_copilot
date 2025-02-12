@@ -15,9 +15,9 @@ def region_image_path(instance, filename):
     # current_time = datetime.now(pst)
     # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
     # filename = f"region_{ instance.region.id }.jpg"
-    user_id = instance.region.case.user.id
-    case_id = instance.region.case.id
-    region_id = instance.region.id
+    user_id = instance.region.case.user.user_id
+    case_id = instance.region.case.case_id
+    region_id = instance.region.region_id
 
     filename = f"{user_id}_{case_id}_{region_id}.jpg"
 
@@ -36,7 +36,7 @@ class Region(CustomIDMixin, models.Model):
     group_id = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
-        return f"Region: { self.id } - Case { self.case.name }"
+        return self.region_id
     
     class Meta:
         # managd = False
@@ -52,7 +52,7 @@ class RegionImage(models.Model):
     image = models.ImageField(upload_to=region_image_path, blank=True, null=True)
 
     def __str__(self):
-        return f"Region Image { self.region.id }"
+        return self.region_image_path
     
     class Meta:
         # managd = False
@@ -69,7 +69,7 @@ class RegionClassification(models.Model):
     region_classifier_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"Region { self.region.id } Classification { self.region_classification_score }"
+        return self.region_id.region_id
         
     class Meta:
         # managd = False

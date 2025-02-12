@@ -25,3 +25,7 @@ def replace(value, args):
     new_char = args[1:]
 
     return value.replace(old_char, new_char)
+
+@register.filter
+def add_class(field, css_class):
+    return field.as_widget(attrs={"class": css_class}) 

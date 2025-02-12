@@ -48,8 +48,9 @@ export class UIManager {
 
         this.elements.confirmRecordButton.addEventListener("click", () => {
             screenShare.startRecording();
-            this.lockToPreviewArea();
+            // this.lockToPreviewArea();
             this.toggleRecordButton();
+            this.openPreviewWindow();
         });
 
         this.elements.stopButton.addEventListener("click", () => {
@@ -57,6 +58,67 @@ export class UIManager {
             screenShare.stopSharing();
             this.resetDisplay();
         });
+    }
+
+    openPreviewWindow() {
+        console.log('openPreviewModal');
+        
+        const previewCanvas = document.getElementById("previewCanvas");
+
+        if (!previewCanvas) {
+            alert("No preview available!");
+            return;
+        }
+ 
+        const previewWindow = window.open("", "CroppedLivePreview", `width=800,height=600,top=100,left=100`);
+
+        if (!previewWindow) {
+            this.updateStatus('Pop-ups are blocked. Please allow popups for this site.');
+            return;
+        }
+
+        previewWindow.document.write(`
+            <html>
+            <head>
+                <title>Live Preview</title>
+                <style>
+                    body { margin: 0; display: flex; justify-content: center; align-items: center; 
+                        height: 100vh; background: blue; }
+                    canvas { width: 100%; height: 100%; }
+                </style>
+            </head>
+            <body>
+                <canvas id="mirroredCanvas" autoplay playsinline></canvas>
+            </body>
+            </html>
+        `);
+
+        previewWindow.document.close();
+
+        // BRING TO FRONT (FOCUS)
+        previewWindow.focus();
+
+        // WAIT FOR WINDOW TO LOAD
+        previewWindow.onload = () => {
+
+            const mirroredCanvas = previewWindow.document.getElementById('mirroredCanvas');
+            const mirroredCtx = mirroredCanvas.getContext('2d');
+
+            // MATCH CANVAS SIZE TO ORIGINAL PREVIEW CANVAS
+            mirroredCanvas.width = previewCanvas.width;
+            mirroredCanvas.hieight = previewCanvas.height;
+
+            function mirroredCanvasFrame() {
+                if (!previewCanvas) return;
+                mirroredCtx.clearRect(0, 0, mirroredCanvas.width, mirroredCanvas.height);
+                mirroredCtx.drawImage(previewCanvas, 0, 0, mirroredCanvas.width, mirroredCanvas.height);
+                requestAnimationFrame(mirroredCanvasFrame);
+            }
+
+            mirroredCanvasFrame();
+
+        };
+
     }
 
     scrollToElement(element) {

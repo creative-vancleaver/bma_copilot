@@ -226,3 +226,7 @@ AZURE_STORAGE_CONTAINER = config('AZURE_STORAGE_CONTAINER')
 
 # AZURE TESTING
 SKIP_AZURE_UPLOAD = True
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+)

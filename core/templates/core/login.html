@@ -1,0 +1,55 @@
+{% extends 'core/base.html' %}
+{% load static %} 
+
+{% block head %}
+
+{% endblock head %}
+
+{% block content %}
+
+    <header class="app-header">
+        
+        <div class="error-container">
+            <div class="container-fluid error-content">
+                <h1 class="error-title">Login</h1>
+
+                <div class="w-100">
+                    <form action="{% url 'login' %}" class="mb-1">
+                        {% csrf_token %}
+
+                        <table style="width: 30%;">
+                            <tr>
+                                <td>{{ form.usernmae.label_tag }}</td>
+                                <td>{{ form.usernmae }}</td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+
+    {% if form.errors %}
+        <p>Your username and password do not match. Please try again.</p>
+    {% endif %}
+
+    <header class="app-header">
+        <h1>Login</h1>
+        
+    </header>
+
+{% endblock content %}

@@ -24,11 +24,11 @@ from .serializers import CaseSerializer
 from .utils import upload_to_azure_blob
 from cells.services.azure_service import CaseAzureService
 
-USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='False') == 'True'
-USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False') == 'True'
+USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='False').lower() == 'true'
+USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False').lower() == 'true'
 
 class CaseViewSet(viewsets.ModelViewSet):
-    
+
     # TEMP DISABLE AUTH FOR THIS VIEW
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -39,8 +39,10 @@ class CaseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        print('use azure services ', USE_AZURE_SERVICES)
-        
+        print("USE_AZURE_STORAGE:", config('USE_AZURE_STORAGE', default='Not Found'))
+        print("AZURE_STORAGE_CONNECTION_STRING:", config('AZURE_STORAGE_CONNECTION_STRING', default='Not Found'))
+        print("AZURE_STORAGE_CONTAINER:", config('AZURE_STORAGE_CONTAINER', default='Not Found'))
+                
         # Only sync with Azure if enabled
         if USE_AZURE_SERVICES:
             azure_service = CaseAzureService()
@@ -86,34 +88,40 @@ def save_recording(request, case_id):
         case = Case.objects.get(case_id=case_id)
         
         # Generate a unique ID for the video
-        pst = pytz.timezone('America/Los_Angeles')
-        current_time = datetime.now(pst)
-        video_id = f"vid_{current_time.strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
+        # pst = pytz.timezone('America/Los_Angeles')
+        # current_time = datetime.now(pst)
+        # video_id = f"vid_{current_time.strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
         
         # Create video object with generated ID
         new_video = Video.objects.create(
-            video_id=video_id,
+            # video_id=video_id,
             case=case
         )
+        # new_video.video_id = f"{case.user.user_id}_{case.case_id}_{}"
+
         
         # Generate filename and path
-        filename = f"{case.user.user_id}_{case.case_id}_{video_id}.webm"
+        filename = f"{case.user.user_id}_{case.case_id}_{new_video.video_id}.webm"
         file_path = f"cases/{case_id}/recordings/{filename}"
+
+        print('request ', request, request.FILES)
 
         try:
             if USE_AZURE_STORAGE:
+                print('upload to blob')
                 # Upload to Azure Blob Storage
-                blob_url = upload_to_azure_blob(video_file, file_path)
+                blob_url = upload_to_azure_blob(video_file, filename)
                 new_video.azure_url = blob_url
                 new_video.video_file_path = file_path
+                print('blob url ', blob_url)
                 
                 # Sync with Azure DB
-                azure_service = CaseAzureService()
-                azure_service.azure_db.add_video(
-                    video_id=video_id,
-                    video_file_path=file_path,
-                    case_id=str(case_id)
-                )
+                # azure_service = CaseAzureService()
+                # azure_service.azure_db.add_video(
+                #     video_id=video_id,
+                #     video_file_path=file_path,
+                #     case_id=str(case_id)
+                # )
             else:
                 # Save locally
                 local_path = os.path.join(settings.MEDIA_ROOT, file_path)
@@ -132,7 +140,7 @@ def save_recording(request, case_id):
             return JsonResponse({
                 "success": True,
                 "case": case.case_id,
-                "video_id": video_id,
+                "video_id": new_video.video_id,
                 "filename": filename,
                 "video_file_path": new_video.video_file_path,
                 "url": new_video.azure_url if USE_AZURE_STORAGE else new_video.video_file_path

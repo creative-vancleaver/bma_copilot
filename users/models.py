@@ -86,16 +86,36 @@ class User(AbstractUser):
         db_table = 'users'  # Match Azure table name
         # # managd = False
 
+# class CustomIDMixin(models.Model):
+#     id_field = "id"
+
+#     @classmethod
+#     def generate_custom_id(cls):
+#         if hasattr(cls, 'objects'):
+#             last_instance = cls.objects.order_by(f"-{cls.id_field}").first()
+#             if last_instance and last_instance.id_field.isdigit():
+#                 return str(int(last_instance.id_field) + 1)
+#         return "1"
+    
+#     class Meta:
+#         abstract = True
 class CustomIDMixin(models.Model):
     id_field = "id"
 
     @classmethod
-    def generate_custom_id(cls):
-        last_instance = cls.objects.order_by(f"-{cls.id_field}").first()
-        if last_instance and last_instance.id_field.isdigit():
-            return str(int(last_instance.id_field) + 1)
-        return "1"
-    
+    def generate_custom_id(cls, id_field, parent_id=None):
+        prefix = f"{ parent_id }_" if parent_id else ""
+
+        if hasattr(cls, 'object'):
+            last_instance = cls.objects.order_by(f"-{id_field}").first()
+            print('last_instance ', last_instance)
+            if last_instance:
+                last_id = getattr(last_instance, id_field).split("_")[-1]
+                print('last id ', last_id)
+                if last_id.isdifgit():
+                    return f"{prefix}{int(last_id) + 1}"
+                
+        return f"{prefix}1"
+
     class Meta:
         abstract = True
-        

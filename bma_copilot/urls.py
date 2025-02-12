@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from users.views import user_login  # Import the login view
 
 from rest_framework_simplejwt.views import(
     TokenObtainPairView,
@@ -23,6 +24,9 @@ urlpatterns = [
     path('api/cases/', include('cases.urls')),
     path('api/regions/', include('regions.urls')),
     path('api/cells/', include('cells.urls')),
+
+    # # path('login/', user_login, name='login'),  # Add this line for login
+    # path('accounts/', include('django.contrib.auth.urls'), name='accounts'),
 ]
 
 # SERVE MEDIA FILE IN DEV

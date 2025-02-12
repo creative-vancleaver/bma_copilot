@@ -14,7 +14,7 @@ def cell_image_path(instance, filename):
     # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
     # filename = f"cell_{ instance.id }.jpg"
 
-    user_id = instance.region.case.user.id
+    user_id = instance.region.video_id.case.user.user_id
     case_id = instance.region.case.id
     region_id = instance.region.id
     cell_id = instance.id
@@ -43,7 +43,7 @@ class Cell(CustomIDMixin, models.Model):
     BR_y_in_region = models.FloatField(blank=True, null=True)
 
     def __str__(self):
-        return f"Cell { self.id } in Region { self.region.id }"
+        return self.cell_id
 
     class Meta:
         # managd = False
@@ -60,7 +60,7 @@ class CellDetection(models.Model):
     is_user_added = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Detection for Cell { self.cell.id }"
+        return self.cell.cell_id
     
     class Meta:
         # managd = False
@@ -92,7 +92,7 @@ class CellClassification(models.Model):
 
 
     def __str__(self):
-        return f"Cell { self.cell.id } Classification"
+        return self.cell.cell_id
 
     class Meta:
         # managd = False

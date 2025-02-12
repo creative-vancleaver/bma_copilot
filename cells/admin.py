@@ -14,7 +14,9 @@ class CellAdmin(admin.ModelAdmin):
     get_region_id.admin_order_field = 'region__region_id'
 
     def get_case_id(self, obj):
-        return obj.region.case.case_id
+        if obj.region is not None:
+            return obj.region.video_id.case.case_id
+        return None
     get_case_id.short_description = 'Case ID'
     get_case_id.admin_order_field = 'region__case__case_id'
 
@@ -33,7 +35,7 @@ class CellDetectionAdmin(admin.ModelAdmin):
 class CellClassificationAdmin(admin.ModelAdmin):
 
     list_display = ('get_cell_id', 'ai_cell_class', 'user_cell_class', 'cell_classification_model_id')
-    search_fields = ('cell__cell_id', 'cell_classification_model_id')
+    search_fields = ('cell__cell_id', 'cell_classification_model_id', 'user_cell_class', 'ai_cell_class')
 
     def get_cell_id(self, obj):
         return obj.cell.cell_id

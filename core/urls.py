@@ -1,11 +1,13 @@
-from django.urls import path
+from django.urls import path, include
 
 from . import views
 
 urlpatterns = [
     
-    # FRONT URLS
+    # FRONT END URLS
     path('', views.index, name='home'),
+
+    path('accounts/', include('django.contrib.auth.urls'), name='accounts'),
 
     path('case/<int:case_id>/', views.case, name="case"),
 

@@ -49,7 +49,7 @@ class Case(CustomIDMixin, models.Model):
     user = models.ForeignKey(User, db_column='user_id', to_field='user_id', on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.case_name
+        return self.case_id
     
     class Meta:
         # managd = False
@@ -74,7 +74,7 @@ class Video(CustomIDMixin, models.Model):
     # date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Video for Case: { self.case.case_name }"
+        return self.video_id
 
     class Meta:
         # managd = False
