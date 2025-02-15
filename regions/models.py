@@ -24,7 +24,7 @@ def region_image_path(instance, filename):
     return os.path.join("cases", str(instance.region.case.id), "regions", str(instance.region.id), filename)
     
 class Region(CustomIDMixin, models.Model):
-    region_id = models.CharField(primary_key=True, max_length=255, unique=True, default=CustomIDMixin.generate_custom_id)  # Match Azure's region_id
+    region_id = models.CharField(primary_key=True, max_length=255, unique=True, default=None)  # Match Azure's region_id
     case = models.ForeignKey(Case, db_column='case_id', to_field='case_id', on_delete=models.CASCADE, related_name="regions", blank=True, null=True)
     video_id = models.ForeignKey(Video, db_column='video_id', to_field='video_id', on_delete=models.CASCADE, null=True, blank=True)
     time_stamp = models.DateTimeField(blank=True, null=True)
@@ -37,6 +37,10 @@ class Region(CustomIDMixin, models.Model):
 
     def __str__(self):
         return self.region_id
+    
+    def save(self, *args, **kwargs):
+        if not self.region_id:
+            self.region_id = self.generate_custom_id()
     
     class Meta:
         # managd = False

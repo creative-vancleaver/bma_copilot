@@ -1,6 +1,7 @@
 import uuid
-
+import re
 from django.db import models
+from django.db.models import Max
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class CustomUserManager(BaseUserManager):
@@ -86,36 +87,39 @@ class User(AbstractUser):
         db_table = 'users'  # Match Azure table name
         # # managd = False
 
-# class CustomIDMixin(models.Model):
-#     id_field = "id"
 
-#     @classmethod
-#     def generate_custom_id(cls):
-#         if hasattr(cls, 'objects'):
-#             last_instance = cls.objects.order_by(f"-{cls.id_field}").first()
-#             if last_instance and last_instance.id_field.isdigit():
-#                 return str(int(last_instance.id_field) + 1)
-#         return "1"
-    
-#     class Meta:
-#         abstract = True
+
+
+
+
+
 class CustomIDMixin(models.Model):
-    id_field = "id"
 
     @classmethod
-    def generate_custom_id(cls, id_field, parent_id=None):
-        prefix = f"{ parent_id }_" if parent_id else ""
+    def generate_custom_id(cls, **kwargs):
+        """
+        Generates a hierarchical custom ID while ensuring numeric sorting.
+        """
 
-        if hasattr(cls, 'object'):
-            last_instance = cls.objects.order_by(f"-{id_field}").first()
-            print('last_instance ', last_instance)
-            if last_instance:
-                last_id = getattr(last_instance, id_field).split("_")[-1]
-                print('last id ', last_id)
-                if last_id.isdifgit():
-                    return f"{prefix}{int(last_id) + 1}"
-                
-        return f"{prefix}1"
+        primary_key_field = cls._meta.pk.name
+        
+        def extract_last_number(value):
+            numbers = re.findall(r'\d+', value)
+            return int(numbers[-1]) if numbers else 0
+
+        key_components = [str(value) for key, value in kwargs.items() if value is not None]
+
+        existing_ids = cls.objects.filter(**kwargs).values_list(primary_key_field, flat=True)
+
+        last_numeric_id = max([extract_last_number(id_str) for id_str in existing_ids], default=0)
+
+        next_id = str(last_numeric_id + 1)
+
+        new_id = "_".join(key_components + [next_id])
+
+        print(f"[DEBUG] Generated ID: {new_id}")  # Debugging print statement
+
+        return new_id
 
     class Meta:
         abstract = True

@@ -31,7 +31,7 @@ def cell_image_path(instance, filename):
     )
 
 class Cell(CustomIDMixin, models.Model):
-    cell_id = models.CharField(primary_key=True, max_length=255, unique=True, default=CustomIDMixin.generate_custom_id)
+    cell_id = models.CharField(primary_key=True, max_length=255, unique=True, default=None)
     cell_image_path = models.CharField(max_length=255, blank=True, null=True)
     region = models.ForeignKey(Region, db_column='region_id', to_field='region_id', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=cell_image_path, blank=True, null=True)
@@ -44,6 +44,10 @@ class Cell(CustomIDMixin, models.Model):
 
     def __str__(self):
         return self.cell_id
+    
+    def save(self, *args, **kwargs):
+        if not self.cell_id:
+            self.cell_id = self.generate_custom_id()
 
     class Meta:
         # managd = False

@@ -105,6 +105,7 @@ def case(request, case_id):
     diff_counts = diff_view.get_diff_counts(case_id)
 
     context = {
+        'case': case,
         'diff_counts': diff_counts,
         'cell_groups': classification_groups,
         'cell_order': CELL_ORDER,

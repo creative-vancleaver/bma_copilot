@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from users.views import user_login  # Import the login view
+# from users.views import user_login  # Import the login view
 
 from rest_framework_simplejwt.views import(
     TokenObtainPairView,

@@ -10,12 +10,22 @@
         display: flex;
     }
 
+    .sidbar-wrapper {
+        position: relative;
+    }
+
     .sidebar {
         width: 250px;
         background: #f0ebf8;
         padding: 20px;
         height: 100vh;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+
+        position: sticky;
+        top: 64px;
+        height: calv(100vh - 64px);
+        {% comment %} height: calc(100vh - 64px); {% endcomment %}
+        {% comment %} overflow-y: auto; {% endcomment %}
     }
     
     .sidebar-header {
@@ -58,10 +68,26 @@
         padding: 20px;
         text-align: center;
     }
+
+    .classification-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
     
-    .classification-header h2 {
+    .classification-title {
         font-size: 24px;
         color: #4a2f93;
+        text-align: center;
+    }
+
+    .case-status {
+        position: absolute;
+        right: 20px;
+        font-size: 16px;
+        font-weight: bold;
+        color:rgb(40, 25, 78)
     }
     
     .cell-classification {
@@ -87,14 +113,54 @@
         border-radius: 5px;
         cursor: pointer;
     }
+
+    .cell-name {
+        flex-grow: 1;
+    }
+
+    .percent {
+        text-align: right;
+        min-width: 50px;
+        margin-left: auto;
+    }
     
     .percentage {
         margin-top: 10px;
         font-weight: bold;
         color: #4a2f93;
     }
+
+    .cell-link {
+        {% comment %} display: flex; {% endcomment %}
+        {% comment %} justify-content: space-between;
+        min-width: max-content; {% endcomment %}
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .cell-link a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .cell-link:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.19);
+    }
+
+    {% comment %} .cell-anchor:target::before {
+        content: "";
+        display: block;
+        height: 75px;
+        margin-top: -100px;
+    } {% endcomment %}
+
+    .cell-anchor {
+        height: 0;
+        overflow: hidden;
+    }
 </style>
 <script src="{% static 'core/js/Cell.js' %}"></script>
+<script src="{% static 'core/js/Case.js' %}"></script>
 {% endblock head %}
 
 {% block content %}
@@ -107,41 +173,73 @@
                 {% comment %} <button class="menu-toggle">XX</button> {% endcomment %}
             </div>
 
-            <div class="sidebar-section">
+            {% comment %} <div class="sidebar-section">
                 <h3>Annotated Regions</h3>
-            </div>
+            </div> {% endcomment %}
             <div class="sidebar-section">
                 <h3>Differential Count</h3>
                 <h5>Cell Total: {{ cell_total }}</h5>
                 <ul>
                     {% for cell_type, percentage in diff_counts.items %}
-                        <li>{{ cell_type|replace:"_ "|title }} <span id="{{ cell_type }}_percent" class="percent">{{ percentage }}%</span></li>
+                            <li class="cell-link">
+                                <a href="#{{ cell_type }}_anchor">
+                                    <span class="cell-name">{{ cell_type|replace:"_ "|title }} </span>
+                                    <span id="{{ cell_type }}_percent" class="percent">
+                                        {{ percentage }}%
+                                    </span>
+                                </a>
+                            </li>
                     {% endfor %}
 
-                    <li class="mt-3">Skippocytes <span id="{{ skippocytes }}_percent" class="percent">{{ skippocytes_counts }}</span></li>
+                    <li class="mt-3 cell-link">
+                        <a href="#skippocytes">
+                        Skippocytes 
+                            <span id="{{ skippocytes }}_percent" class="percent">
+                                {{ skippocytes_counts }}
+                            </span>
+                        </a>
+                    </li>
 
                 </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Close Case</h3>
+                {% if case.case_status == 'completed' or case.case_status == 'archived' %}
+                    <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed" disabled>
+                        Case Closed
+                    </button>
+                {% else %}
+                    <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed">
+                        Sign Out
+                    </button>
+                {% endif %}
             </div>
         </aside>
 
         <div class="content">
             <div class="classification-header">
-                <h2>Cell Classifications</h2>
+                <h2 class='classification-title'>
+                    Cell Classifications
+                    {% if case.case_status == 'completed' %}
+                        <span class='case-status'>Completed</span>
+                    {% elif case.case_status == 'archived' %}
+                        <span class='case-status'>Archived</span>
+                    {% endif %}
+                </h2>
             </div>
-
-            {% comment %} <pre>{{ cell_groups | pprint }}</pre> {% endcomment %}
-
 
             <div class="cell-classification-container">
                 {% for class_name in cell_order %}
                     {% if class_name in cell_groups %}
+                        <div id="{{ class_name }}_anchor" class="cell-anchor"></div>
                         <section id="{{ class_name }}" class="cell-classification" data-class="{{ class_name }}">
                             <h3>{{ class_name|replace:"_ "|title }}</h3>
                             <div class="cell-images">
                                 {% with cell_groups|get_item:class_name as cells %}        
                                     {% for cell in cells %}
                                         {% if cell.image_url %}
-                                            <div class="cell-image" data-class="{{ class_name }}" data-id="{{ cell.id }}">
+                                            <div class="cell-image" data-class="{{ class_name }}" data-id="{{ cell.cell_id }}">
                                                 <img src="{{ cell.image_url }}" alt="{{ class_name }}">
                                             </div>
                                         {% else %}
@@ -161,8 +259,17 @@
     <script>
         $(document).ready(function() {
 
-            $('.cell-image').each(function() {
-                Cell.cellItemClickHandler(this);
+            {% if case.case_status != 'completed' and case.case_status != 'archived' %}
+                $('.cell-image').each(function() {
+                    Cell.cellItemClickHandler(this);
+                });
+            {% endif %}
+
+            $('#closeCase').on('click', function() {
+                $(this).prop('disabled', true).text('Updating...')
+                let case_id = $(this).data('case-id');
+                let status = $(this).data('status');
+                Case.updateCaseStatus(case_id, status);
             });
             
         });

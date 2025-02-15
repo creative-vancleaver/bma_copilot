@@ -94,12 +94,14 @@ class LabelCellView(APIView):
 
             cell_class, created = CellClassification.objects.get_or_create(
                 cell=cell,
-                defaults={"user_class": user_label}
+                defaults={"user_cell_class": user_label}
             )
 
             if not created:
-                cell_class.user_class = user_label
+                cell_class.user_cell_class = user_label
                 cell_class.save()
+
+            print('new cell class ', cell_class)
 
             # Sync to Azure DB after updating Django DB
             azure_service = CellAzureService()
@@ -112,7 +114,7 @@ class LabelCellView(APIView):
 
             return Response({
                 "success": True,
-                "new_cell_class": cell_class.user_class
+                "new_cell_class": cell_class.user_cell_class
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -170,6 +172,7 @@ class CellStatsView(APIView):
         return cell_counts
     
     def get_diff_counts(self, case_id):
+        print('get_diff_counts ', case_id)
 
         cell_counts = self.get_cell_counts(case_id)
         filtered_counts = [item for item in cell_counts if item["class_name"] != "skippocytes"]
@@ -178,6 +181,10 @@ class CellStatsView(APIView):
 
         if total_cells == 0:
             return {class_name: 0.0 for class_name in CELL_ORDER if class_name != "skippocytes"}
+        
+        diff = { item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
+            for item in filtered_counts }
+        print(diff)
         
         return {
             item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
@@ -208,16 +215,18 @@ class CellStatsView(APIView):
                 return Response({ 'success': False, 'error': 'missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
                      
             # cell_class = get_object_or_404(CellClassification, cell__id=cell_id)
-            cell = get_object_or_404(Cell, id=cell_id)
+            cell = get_object_or_404(Cell, cell_id=cell_id)
 
             cell_class, created = CellClassification.objects.get_or_create(
                 cell=cell,
-                defaults={"user_class": new_label}
+                defaults={"user_cell_class": new_label}
             )
 
             if not created:
-                cell_class.user_class = new_label
+                cell_class.user_cell_class = new_label
                 cell_class.save()
+
+            print('new cell class ', cell_class)
 
             updated_cell_counts = self.get_cell_counts(case_id)
             updated_diff_counts = self.get_diff_counts(case_id)

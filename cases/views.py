@@ -11,6 +11,9 @@ from decouple import config
 
 from django.conf import settings
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
 from django.views.decorators.csrf import csrf_exempt
 
@@ -70,6 +73,7 @@ os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=Tru
 
 @csrf_exempt # EXEMPT IN DEV ONLY
 def save_recording(request, case_id):
+
     if request.method != 'POST':
         return JsonResponse({
             "success": False,
@@ -84,78 +88,50 @@ def save_recording(request, case_id):
             }, status=400)
         
         video_file = request.FILES["video"]
-        print('video_file ', video_file)
-        case = Case.objects.get(case_id=case_id)
+
+        # FOR NOW EACH VIDEO WILL BE A NEW CASE
+        # case = Case.objects.get(case_id=case_id)
+        case = Case.objects.create(user=request.user)
+        case_id = case.case_id
         
-        # Generate a unique ID for the video
-        # pst = pytz.timezone('America/Los_Angeles')
-        # current_time = datetime.now(pst)
-        # video_id = f"vid_{current_time.strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
-        
-        # Create video object with generated ID
-        new_video = Video.objects.create(
-            # video_id=video_id,
-            case=case
-        )
-        # new_video.video_id = f"{case.user.user_id}_{case.case_id}_{}"
 
         
         # Generate filename and path
-        filename = f"{case.user.user_id}_{case.case_id}_{new_video.video_id}.webm"
+        # EACH CASE HAS 1 VIDEO - THEREFORE VIDEO_ID = 1.
+        filename = f"{case_id}_1.webm"
         file_path = f"cases/{case_id}/recordings/{filename}"
 
-        print('request ', request, request.FILES)
+        print(filename)
 
         try:
-            if USE_AZURE_STORAGE:
-                print('upload to blob')
-                # Upload to Azure Blob Storage
-                blob_url = upload_to_azure_blob(video_file, filename)
-                new_video.azure_url = blob_url
-                new_video.video_file_path = file_path
-                print('blob url ', blob_url)
+            # if USE_AZURE_STORAGE:
+            print('upload to blob')
+            # UPLOAD TO AZURE STORAGE BLOB
+            blob_url = upload_to_azure_blob(video_file, filename)
+            # new_video.azure_url = blob_url
+            # new_video.video_file_path = file_path
                 
-                # Sync with Azure DB
-                # azure_service = CaseAzureService()
-                # azure_service.azure_db.add_video(
-                #     video_id=video_id,
-                #     video_file_path=file_path,
-                #     case_id=str(case_id)
-                # )
-            else:
-                # Save locally
-                local_path = os.path.join(settings.MEDIA_ROOT, file_path)
-                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            # else:
+            #     # Save locally
+            #     local_path = os.path.join(settings.MEDIA_ROOT, file_path)
+            #     os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
-                with open(local_path, 'wb+') as destination:
-                    for chunk in video_file.chunks():
-                        destination.write(chunk)
-                
-                new_video.video_file_path = file_path
+            #     with open(local_path, 'wb+') as destination:
+            #         for chunk in video_file.chunks():
+            #             destination.write(chunk)
 
-            # Update video object
-            # new_video.video_file.name = file_path
-            # new_video.save()
 
             return JsonResponse({
                 "success": True,
                 "case": case.case_id,
-                "video_id": new_video.video_id,
                 "filename": filename,
-                "video_file_path": new_video.video_file_path,
-                "url": new_video.azure_url if USE_AZURE_STORAGE else new_video.video_file_path
             })
             
         except Exception as storage_error:
             # If storage fails, delete the video object
-            new_video.delete()
+            # new_video.delete()
             raise storage_error
             
-    except Case.DoesNotExist:
-        return JsonResponse({
-            "success": False,
-            "error": f"Case with ID {case_id} not found"
-        }, status=404)
     except Exception as e:
         import traceback
         print(f"Error in save_recording: {str(e)}")
@@ -164,6 +140,43 @@ def save_recording(request, case_id):
             "success": False,
             "error": str(e)
         }, status=500)
+
+@login_required
+def update_case_status(request, case_id):
+
+    if request.method == 'POST':
+
+        try:
+            case = get_object_or_404(Case, case_id=case_id)
+        
+            new_status = request.POST.get('status')
+
+            valid_statuses = ['pending', 'in_progress', 'completed', 'archived']
+            if new_status not in valid_statuses:
+                return JsonResponse({
+                    "success": False,
+                    "error": 'Invaild status'
+                }, status=400)
+            
+            case.case_status = new_status
+            case.save()
+
+            return JsonResponse({
+                'success': True,
+                'new_status': case.case_status
+            })
+        
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+        
+    return JsonResponse({
+        'success': False,
+        'error': 'Invaid request method'
+    }, status=500)
+
 
 @csrf_exempt
 def save_screenshot(request, case_id):

@@ -26,9 +26,15 @@
                         <input type="hidden" name="next" value="{% url 'home' %}"/>
                     </div>
                 </form>
-                <p class="text-center">
-                    <a href="{% url 'password_reset' %}" style="font-size: .9rem;">
+                <p class="text-center mt-3 mb-1">
+                    <a href="#" style="font-size: .9rem;">
+                        {% comment %} {% url 'password_reset' %} {% endcomment %}
                         Lost password?
+                    </a>
+                </p>
+                <p class="text-center mt-0">
+                    <a href="{% url 'register' %}" style="font-size: .9rem;">
+                        Register
                     </a>
                 </p>
             </div>

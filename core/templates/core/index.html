@@ -11,8 +11,9 @@
             <p class="app-description">
                 Automatically track and analyze your microscope camera feed in real-time
                 <ol class="instructions">
-                    <li>Click "Start Screen Share" and select the microscope mounted camera output window </li>
-                    <li>Once sharing begins, click and drag on the screen to select the specific region containing your microscope view</li>
+                    <li>Click "Start Screen Share" and select the microscope mounted camera output window.</li>
+                    <li>Once sharing begins, select 'Start Recording'.</li>
+                    <li>Click and drag on the screen to select the specific region containing your microscope view anc click 'Confirm Recording</li>
                     <li>A live preview of your selected region will appear in the right panel. Use "Reset Selection" to adjust if needed, or "Stop Sharing" when done</li>
                     <li>Proceed with your normal BMA interpretation workflow! The selected region will be automatically monitored and analyzed by BMACopilot</li>
                 </ol>
@@ -54,26 +55,29 @@
                 Start Recording
             </button>
 
-            <button id="confirmRecordButton" class="btn btn-primary" style="display: none;">
+            <button id="confirmRecordButton" class="btn btn-primary" style="display: none;" disabled>
                 <svg class="icon" viewBox="0 0 24 24">
                     <path d="M9 16.2l-5.5-5.5-1.5 1.5 7 7 12-12-1.5-1.5z"/>
                 </svg>
-                Confirm Record
+                Confirm Recording
             </button>
         
         </div>
 
         <div class="content-container">
             <div class="main-screen">
-                <div class="screen-container">
+                <div id="screenContainer" class="screen-container" style="display: none;">
                     <video id="sharedScreen" autoplay playsinline></video>
                     <div class="crop-overlay">
                         <div class="crop-box"></div>
                     </div>
                 </div>
+                <div id="processingContainer" style="display: none;">
+                    <i class="fa-solid fa-microscope fa-bounce fa-2xl" style="color: #ba75ff;"></i>
+                </div>
             </div>
 
-            <div id="previewPane" class="preview-pane">
+            <div id="previewPane" class="preview-pane" style="display: none;">
                 <div class="preview-header">
                     <h3>Live Preview</h3>
                     <span class="preview-subtitle">Real-time view of captured whole slide image regions</span>
