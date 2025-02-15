@@ -3,6 +3,8 @@ from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+import pandas as pd
+from decouple import config
 
 from .models import Cell, CellDetection, CellClassification
 from .serializers import CellSerializer, CellDetectionSerializer, CellClassificationSerializer
@@ -13,27 +15,34 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from cells.services.azure_service import CellAzureService
+from core.services.azure_blob_service import get_blob_url
 
 CELL_ORDER = [
-    'blast', 'promyelocyte', 'myelocyte', 'metamyelocyte', 'neutrophil', 'monocyte', 'eosinophil', 
-    'basophil', 'lymphocyte', 'plasma-cell', 'erythroid-precursor', 'skippocyte', 'unclassified'
+    'blasts_and_blast_equivalents', 'promyelocytes', 'myelocytes', 'metamyelocytes', 'neutrophils', 'monocytes', 'eosinophils', 'lymphocytes', 'plasma_cells', 'erythroid_precursors', 'skippocytes',
 ]
+
+USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False') == 'True'
 
 class CellViewSet(viewsets.ModelViewSet):
 
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    queryset = Cell.objects.all().order_by('-id')
+    queryset = Cell.objects.all().order_by('-cell_id')
     serializer_class = CellSerializer
 
     def get_queryset(self):
-        return Cell.objects.select_related(
-            'region',
-            'region__case',
-            'detection',
-            'classification'
-        ).all().order_by('-id')
+        queryset = super().get_queryset()
+        
+        # Only sync with Azure if enabled
+        if USE_AZURE_SERVICES:
+            azure_service = CellAzureService()
+            for cell in queryset:
+                azure_service.sync_cell_classification(str(cell.id))
+                azure_service.sync_cell_detection(str(cell.id))
+            
+        return queryset
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -85,16 +94,27 @@ class LabelCellView(APIView):
 
             cell_class, created = CellClassification.objects.get_or_create(
                 cell=cell,
-                defaults={"user_class": user_label}
+                defaults={"user_cell_class": user_label}
             )
 
             if not created:
-                cell_class.user_class = user_label
+                cell_class.user_cell_class = user_label
                 cell_class.save()
+
+            print('new cell class ', cell_class)
+
+            # Sync to Azure DB after updating Django DB
+            azure_service = CellAzureService()
+            azure_service.azure_db.add_cell_classifications_from_df(pd.DataFrame([{
+                'cell_id': str(cell.id),
+                'ai_cell_class': None,
+                'user_cell_class': user_label,
+                # ... other fields set to None ...
+            }]))
 
             return Response({
                 "success": True,
-                "new_cell_class": cell_class.user_class
+                "new_cell_class": cell_class.user_cell_class
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -112,29 +132,37 @@ class CellStatsView(APIView):
 
     def get_cell_counts(self, case_id):
 
+        # print(Cell.objects.filter(region__video_id__case__case_id=case_id).count())
+
         queryset = (
             Cell.objects
-            .filter(region__case_id=case_id)
+            .filter(region__video_id__case__case_id=case_id)
             .annotate(
                 ai_class=Subquery(
-                    CellClassification.objects.filter(cell=OuterRef("id")).values("ai_class")[:1]
+                    CellClassification.objects.filter(cell=OuterRef("cell_id")).values("ai_cell_class")[:1]
                 ),
                 user_class=Subquery(
-                    CellClassification.objects.filter(cell=OuterRef("id")).values("user_class")[:1]
+                    CellClassification.objects.filter(cell=OuterRef("cell_id")).values("user_cell_class")[:1]
                 ),
-                class_name=Coalesce(
-                    Subquery(CellClassification.objects.filter(cell=OuterRef("id")).values("user_class")[:1]),
-                    Subquery(CellClassification.objects.filter(cell=OuterRef("id")).values("ai_class")[:1]),
-                    Value("unclassified")
+                class_name=Subquery(
+                    CellClassification.objects
+                    .filter(cell=OuterRef('cell_id'))
+                    .values("user_cell_class")[:1] # PRIORITIZE USER CLASSIFICATION
                 )
             )
-            .values("class_name")
-            .annotate(cell_count=Count("id"))
+            .values("class_name", "cell_id")
+            .annotate(cell_count=Count("cell_id"))
+            .order_by('class_name')
         )
 
-        cell_counts_dict = {
-            item["class_name"]: item["cell_count"] for item in queryset
-        }
+        cell_counts_dict = {}
+        for item in queryset:
+            class_name = item["class_name"]
+            cell_counts_dict[class_name] = cell_counts_dict.get(class_name, 0) + item["cell_count"]
+
+        # cell_counts_dict = {
+        #     item["class_name"]: item["cell_count"] for item in queryset
+        # }
 
         cell_counts = [
             {"class_name": class_name, "cell_count": cell_counts_dict.get(class_name, 0)}
@@ -144,16 +172,23 @@ class CellStatsView(APIView):
         return cell_counts
     
     def get_diff_counts(self, case_id):
+        print('get_diff_counts ', case_id)
 
         cell_counts = self.get_cell_counts(case_id)
-        total_cells = sum(item['cell_count'] for item in cell_counts)
+        filtered_counts = [item for item in cell_counts if item["class_name"] != "skippocytes"]
+
+        total_cells = sum(item['cell_count'] for item in filtered_counts)
 
         if total_cells == 0:
-            return {class_name: 0.0 for class_name in CELL_ORDER}
+            return {class_name: 0.0 for class_name in CELL_ORDER if class_name != "skippocytes"}
+        
+        diff = { item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
+            for item in filtered_counts }
+        print(diff)
         
         return {
             item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
-            for item in cell_counts
+            for item in filtered_counts
         }
     
     def get(self, request, case_id, *args, **kwargs):
@@ -180,16 +215,18 @@ class CellStatsView(APIView):
                 return Response({ 'success': False, 'error': 'missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
                      
             # cell_class = get_object_or_404(CellClassification, cell__id=cell_id)
-            cell = get_object_or_404(Cell, id=cell_id)
+            cell = get_object_or_404(Cell, cell_id=cell_id)
 
             cell_class, created = CellClassification.objects.get_or_create(
                 cell=cell,
-                defaults={"user_class": new_label}
+                defaults={"user_cell_class": new_label}
             )
 
             if not created:
-                cell_class.user_class = new_label
+                cell_class.user_cell_class = new_label
                 cell_class.save()
+
+            print('new cell class ', cell_class)
 
             updated_cell_counts = self.get_cell_counts(case_id)
             updated_diff_counts = self.get_diff_counts(case_id)
@@ -205,6 +242,17 @@ class CellStatsView(APIView):
                 "success": False,
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+def get_blob_direct_url(request, container_name, blob_name):
+
+    # RETURN DIRECT URL OF AZURE BLOB INSTEAD OF DOWNLOADING IT
+    try:
+        url = get_blob_url(container_name, blob_name)
+        return JsonResponse({ "url": url })
+    except Exception as e:
+        return JsonResponse({ "error": str(e)}, status=500)
+
         
 class CellClassCountView(APIView):
 

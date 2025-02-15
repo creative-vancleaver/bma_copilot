@@ -4,7 +4,7 @@ export class CropManager {
         this.elements = uiManager.getElements();
 
         this.screenShare = screenShare;
-        this.uiManager = uiManager;
+        // this.uiManager = uiManager;
         this.isDrawing = false;
         this.startX = 0;
         this.startY = 0;
@@ -15,6 +15,7 @@ export class CropManager {
         this.cropOverlay = document.querySelector('.crop-overlay');
         this.previewCanvas = document.getElementById('previewCanvas');
         this.ctx = this.previewCanvas.getContext('2d');
+        this.canDraw = false;
     }
 
     initialize() {
@@ -25,10 +26,22 @@ export class CropManager {
         this.cropOverlay.addEventListener('mousedown', (e) => this.startDraw(e));
         this.cropOverlay.addEventListener('mousemove', (e) => this.draw(e));
         this.cropOverlay.addEventListener('mouseup', () => this.endDraw());
-        this.cropOverlay.addEventListener('mouseleave', () => this.endDraw());
+        // this.cropOverlay.addEventListener('mouseleave', () => this.endDraw());
+    }
+
+    enableDrawing() {
+        console.log('CROP')
+        this.canDraw = true;
+    }
+
+    disableDrawing() {
+        this.canDraw = false;
     }
 
     startDraw(e) {
+        console.log('can draw? ', this.canDraw);
+        if (!this.canDraw) return;
+
         const { resetCropButton } = this.elements;
         this.isDrawing = true;
         const bounds = this.cropOverlay.getBoundingClientRect();
@@ -42,7 +55,7 @@ export class CropManager {
     }
 
     draw(e) {
-        if (!this.isDrawing) return;
+        if (!this.canDraw || !this.isDrawing) return;
         
         const bounds = this.cropOverlay.getBoundingClientRect();
         this.currentX = Math.min(Math.max(e.clientX - bounds.left, 0), bounds.width);
@@ -72,11 +85,7 @@ export class CropManager {
         this.isDrawing = false;
 
         const { confirmRecordButton } = this.elements;
-        confirmRecordButton.style.cursor = 'pointer';
-        confirmRecordButton.style.opacity = 1;
-        confirmRecordButton.disabled = false;
-        console.log(confirmRecordButton);
-
+        this.uiManager.updateConfirmRecordButton();
     }
 
     NEWgetCropDimensions() {
@@ -98,7 +107,6 @@ export class CropManager {
             scale: scale
         };
     
-        console.log("✅ Corrected Crop Dimensions:", dimensions);
         return dimensions;    
     }
 
@@ -166,6 +174,13 @@ export class CropManager {
                 this.previewCanvas.width,
                 this.previewCanvas.height
             );
+
+            if (this.uiManager.previewWindow) {
+                const mirroredCtx = this.uiManager.previewWindow.document.getElementById('mirroredCanvas').getContext('2d');
+                mirroredCtx.clearRect(0, 0, this.uiManager.previewWindow.document.getElementById('mirroredCanvas').width, this.uiManager.previewWindow.document.getElementById('mirroredCanvas').height);
+                mirroredCtx.drawImage(this.previewCanvas, 0, 0)
+
+            }
             
             requestAnimationFrame(() => this.updatePreview());
         } catch (error) {

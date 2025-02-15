@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Preview</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .preview-subtitle {
+            display: block;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            background: #000;
+            border: 2px solid #444;
+            border-radius: 4px;
+        }
+
+        .stop-record {
+            margin-top: 20px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="preview-header">
+            <h3>Live Preview</h3>
+            <span class="preview-subtitle">Real-time view of captured whole slide image regions</span>
+        </div>
+        {% comment %} <div id="videoContainer"> {% endcomment %}
+            {% comment %} <video id="previewVideo" autoplay playsinline></video> {% endcomment %}
+        {% comment %} </div> {% endcomment %}
+        <canvas id="previewCanvas"></canvas>
+        <div class="stop-record">
+            <button id="stopRecordingButton" class="btn btn-danger">
+                Stop Recording
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+
+        window.addEventListener('message', (event) => {
+            console.log('Event', event, event.data);
+            
+            if (event.data.type === 'init') {
+                const { width, height } = event.data.crop;
+                console.log('Initializing popup with crop dimensions:', width, height);
+                
+                // Optionally resize canvas or other elements if needed
+                canvas.width = width;
+                canvas.height = height;
+
+                // Adjust the window size if necessary (note: some browsers may restrict this)
+                window.resizeTo(width + 40, height + 80); // Adding some padding for borders
+            }
+            
+            if (event.data.type === 'setStream') {
+                console.log("🎥 Receiving stream in modal...", event.data);
+                try {
+                    console.log('window.opener.sharedStream', window.opener.sharedStream);
+                    const stream = window.opener.sharedStream;
+                    console.log('stream', stream);
+                    document.getElementById("previewVideo").srcObject = stream;
+                } catch (err) {
+                    console.error("❌ Error accessing stream in modal:", err);
+                }
+            } else if (event.data.type === 'previewUpdate') {
+                console.log('event data', event.data);
+                const { imageData, width, height } = event.data;
+                canvas.width = width;
+                canvas.height = height;
+                ctx.putImageData(imageData, 0, 0);
+            }
+        });
+
+        document.getElementById('stopRecordingButton').addEventListener('click', () => {
+            window.opener.postMessage({ type: 'stopRecording' }, '*');
+            window.close();
+        });
+    </script>
+</body>
+</html> 

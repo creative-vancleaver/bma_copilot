@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 from .utils import upload_to_azure_blob
 
 class AzureUploadTest(TestCase):
-    @patch('azure.storage.blob.BlobServiceClient')
+    @patch('cases.utils.BlobServiceClient')
     def test_upload_to_azure_blob_test(self, mock_blob_service):
 
         # SETUP MOCK

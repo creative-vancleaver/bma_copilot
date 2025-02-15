@@ -1,7 +1,9 @@
 from io import BytesIO
 import azure.storage.blob
 
-connection_string = "BlobEndpoint=https://videouploadsdeepheme.blob.core.windows.net/;QueueEndpoint=https://videouploadsdeepheme.queue.core.windows.net/;FileEndpoint=https://videouploadsdeepheme.file.core.windows.net/;TableEndpoint=https://videouploadsdeepheme.table.core.windows.net/;SharedAccessSignature=sv=2022-11-02&ss=b&srt=co&sp=rwiytfx&se=2025-03-01T04:29:05Z&st=2025-02-04T20:29:05Z&spr=https&sig=moJYh4m4mE8lipWGPa6uEevGP%2Brte17jK%2FySuLySDjI%3D"
+from decouple import config
+
+connection_string = config('AZURE_STORAGE_CONNECTION_STRING')
 blob_service_client = azure.storage.blob.BlobServiceClient.from_connection_string(connection_string)
 region_container_name = "regions"
 cell_container_name = "cells"

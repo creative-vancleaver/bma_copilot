@@ -17,7 +17,7 @@ class RegionViewSet(viewsets.ModelViewSet):
     authentication_classes = []
     permission_classes = [AllowAny]
     
-    queryset = Region.objects.all().order_by('-id')
+    queryset = Region.objects.all().order_by('-region_id')
     serializer_class = RegionSerializer
 
     def get_queryset(self):
@@ -28,7 +28,7 @@ class RegionViewSet(viewsets.ModelViewSet):
             # 'classification' -- ONLY WORKS FOR ONE-TO-ONE RELATIONS
         ).prefetch_related(
             'classification' # USED FOR FOREIGN KEY RELATIONS
-        ).all().order_by('-id')
+        ).all().order_by('-region_id')
     
     def get_serializer_context(self):
         context = super().get_serializer_context()

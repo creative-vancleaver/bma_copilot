@@ -3,12 +3,19 @@ from azure_db_manager import DatabaseManager
 from django.utils.text import slugify
 
 from cells.models import Cell, CellClassification, CellDetection
+from cases.models import Case, Video
+from regions.models import Region, RegionImage, RegionClassification
+from core.services.base_service import BaseAzureService
 
-class CellAzureService:
+class CellAzureService(BaseAzureService):
     def __init__(self):
+        super().__init__()
         self.azure_db = DatabaseManager()
 
     def sync_cell_classification(self, cell_id: str) -> Optional[CellClassification]:
+        return self.safe_azure_operation(self._sync_cell_classification, cell_id)
+    
+    def _sync_cell_classification(self, cell_id: str) -> Optional[CellClassification]:
         """Fetch classification from Azure and sync to Django"""
         try:
             cursor = self.azure_db.conn.cursor()
@@ -68,5 +75,123 @@ class CellAzureService:
                 }
             )
             return detection
+        finally:
+            cursor.close()
+
+class CaseAzureService(BaseAzureService):
+    def __init__(self):
+        super().__init__()
+        self.azure_db = DatabaseManager()
+
+    def sync_case(self, case_id: str) -> Optional[Case]:
+        """Fetch case from Azure and sync to Django"""
+        try:
+            cursor = self.azure_db.conn.cursor()
+            cursor.execute("""
+                SELECT * FROM cases 
+                WHERE case_id = ?
+            """, case_id)
+            
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            case, created = Case.objects.update_or_create(
+                id=case_id,
+                defaults={
+                    'name': row.case_name,
+                    'description': row.case_description,
+                    'date': row.case_date,
+                    'time': row.case_time,
+                    'status': row.case_status,
+                    'user_id': row.user_id
+                }
+            )
+            return case
+        finally:
+            cursor.close()
+
+    def sync_video(self, video_id: str) -> Optional[Video]:
+        """Fetch video from Azure and sync to Django"""
+        try:
+            cursor = self.azure_db.conn.cursor()
+            cursor.execute("""
+                SELECT * FROM videos 
+                WHERE video_id = ?
+            """, video_id)
+            
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            video, created = Video.objects.update_or_create(
+                id=video_id,
+                defaults={
+                    'case_id': row.case_id,
+                    'video_file': row.video_file_path
+                }
+            )
+            return video
+        finally:
+            cursor.close()
+
+class RegionAzureService(BaseAzureService):
+    def __init__(self):
+        super().__init__()
+        self.azure_db = DatabaseManager()
+
+    def sync_region(self, region_id: str) -> Optional[Region]:
+        """Fetch region from Azure and sync to Django"""
+        try:
+            cursor = self.azure_db.conn.cursor()
+            cursor.execute("""
+                SELECT * FROM region 
+                WHERE region_id = ?
+            """, region_id)
+            
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            region, created = Region.objects.update_or_create(
+                id=region_id,
+                defaults={
+                    'case_id': row.case_id,
+                    'video_id': row.video_id,
+                    'time_stamp': row.time_stamp,
+                    'TL_x_in_frame': row.TL_x_in_frame,
+                    'TL_y_in_frame': row.TL_y_in_frame,
+                    'BR_x_in_frame': row.BR_x_in_frame,
+                    'BR_y_in_frame': row.BR_y_in_frame,
+                    'group_id': row.group_id
+                }
+            )
+            return region
+        finally:
+            cursor.close()
+
+    def sync_region_classification(self, region_id: str) -> Optional[RegionClassification]:
+        """Fetch region classification from Azure and sync to Django"""
+        try:
+            cursor = self.azure_db.conn.cursor()
+            cursor.execute("""
+                SELECT * FROM region_classification 
+                WHERE region_id = ?
+            """, region_id)
+            
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            region = Region.objects.get(id=region_id)
+            classification, created = RegionClassification.objects.update_or_create(
+                region=region,
+                defaults={
+                    'classification_score': row.region_classification_score,
+                    'is_selected': row.is_selected_by_region_classifier,
+                    'classifier_id': row.region_classifier_id
+                }
+            )
+            return classification
         finally:
             cursor.close()

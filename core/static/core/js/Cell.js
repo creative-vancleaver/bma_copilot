@@ -40,22 +40,22 @@ class Cell {
 
 	static label_dict = {
 
-		'Digit1': 'blast', // BLAST
-		'Digit2': 'promyelocyte', // PROMYELOCYTE
-		'Digit3': 'myelocyte', // MYELOCYTE
-		'Digit4': 'metamyelocyte', // METAMYELOCYTE
-		'Digit5': 'neutrophil', // NEUTROPHIL/BAND
+		'Digit1': 'blasts_and_blast_equivalents', // BLAST
+		'Digit2': 'promyelocytes', // PROMYELOCYTE
+		'Digit3': 'myelocytes', // MYELOCYTE
+		'Digit4': 'metamyelocytes', // METAMYELOCYTE
+		'Digit5': 'neutrophils', // NEUTROPHIL/BAND
 
-		'KeyA': 'monocyte', // MONOCYTE
-		'KeyS': 'eosinophil', // EOSINOPHIL
-		'KeyD': 'basophil', // BASOPHIL
+		'KeyA': 'monocytes', // MONOCYTE
+		'KeyS': 'eosinophils', // EOSINOPHIL
+		//'KeyD': 'basophil', // BASOPHIL
 		
-		'KeyF': 'lymphocyte', // LYMPHOCYTE
-		'KeyJ': 'plasma-cell', // PLASMA CELL
+		'KeyF': 'lymphocytes', // LYMPHOCYTE
+		'KeyJ': 'plasma_cells', // PLASMA CELL
 
-		'KeyK': 'erythroid-precursor', // ERYTHROID PRECURSOR
+		'KeyK': 'erythroid_precursors', // ERYTHROID PRECURSOR
 
-		'KeyL': 'skippocyte' // OTHER
+		'KeyL': 'skippocytes' // OTHER
 		
 		// 'Period': 'L10', // LYMPHOCYTE
 		// 'KeyH': 'HA10', // HAIRY CELL
@@ -75,10 +75,13 @@ class Cell {
 
 	}
 
-    static labelCurrentCell(label, cell_id, case_id) {
+    static labelCurrentCell(label, cell_id) {
+        console.log('label ', label)
 
         const DEV_TOKEN = Cell.devToken();
-        case_id = 1;
+        let case_id = window.location.pathname.split('/')[2]
+        console.log(case_id);
+        // case_id = '1';
 
 		//Update record in database
 		fetch(`/api/cells/stats/${ case_id }/`, {
@@ -128,6 +131,7 @@ class Cell {
             }
 
             let targetSection = document.querySelector(`#${ new_label }`);
+            console.log('targetSection ', targetSection);
 
             if (!targetSection) {
                 targetSection = Cell.insertCellSection(new_label);
@@ -195,7 +199,7 @@ class Cell {
 
     static async fetchCellCounts(caseID) {
 
-        caseID = 1;
+        caseID = '1';
 
         try {
             const response = await fetch(`/api/cells/cell_counts/${ caseID}`, {
@@ -220,7 +224,7 @@ class Cell {
 
     static async getDiff(caseID) {
 
-        caseID = 1;
+        caseID = '1';
 
         try {
             const response = await fetch(`/api/cells/get_diff/${ caseID }`, {

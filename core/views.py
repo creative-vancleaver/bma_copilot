@@ -1,127 +1,122 @@
-
 from collections import defaultdict
+from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.shortcuts import render
+from decouple import config
 
 from cells.models import Cell, CellClassification
 from cells.views import CellStatsView
-
+from .services.azure_blob_service import get_blob_url
 from cases.models import Case
 
 CELL_ORDER = [
-    'blast', 'promyelocyte', 'myelocyte', 'metamyelocyte', 'neutrophil', 'monocyte', 'eosinophil', 
-    'basophil', 'lymphocyte', 'plasma-cell', 'erythroid-precursor', 'skippocyte', 'unclassified',
+    'blasts_and_blast_equivalents', 'promyelocytes', 'myelocytes', 'metamyelocytes', 'neutrophils', 'monocytes', 'eosinophils', 'lymphocytes', 'plasma_cells', 'erythroid_precursors', 'skippocytes',
 ]
 
+@login_required
 def index(request):
 
     return render(request, 'core/index.html')
 
-
+@login_required
 def case(request, case_id):
 
-    case = Case.objects.get(id=case_id)
+    case = Case.objects.get(case_id=case_id)
     
-    cell_total = Cell.objects.filter(region__case=case).count()
+    cell_total = Cell.objects.filter(region__video_id__case=case).count()
     print(cell_total)
-
-    # classifications = (
-    #     CellClassification.objects
-    #     .filter(cell__region__case=case)
-    #     .select_related("cell")
-    #     .values(
-    #         "ai_class",
-    #         "cell_id",
-    #         "user_class",
-    #         "cell__image",  # Get image field from Cell model
-    #         "myelocyte_score",
-    #         "metamyelocyte_score",
-    #         "neutrophil_score",
-    #         "monocyte_score",
-    #         "eosinophil_score",
-    #         "erythroid_precursor_score",
-    #         "lymphocyte_score",
-    #         "plasma_cell_score",
-    #         "blast_score",
-    #         "skippocyte_score",
-
-    #         "basophil_score",
-    #     )
-    #     .order_by("user_class", "ai_class")  # Ensures results are grouped by user_class THEN ai_class
-    # )
 
     classifications = (
         Cell.objects
-        .filter(region__case=case)
+        .filter(region__video_id__case=case)
         .annotate(
-            ai_class=F("classification__ai_class"),
-            user_class=F("classification__user_class"),
+            ai_class=F("cellclassification__ai_cell_class"),
+            user_class=F("cellclassification__user_cell_class"),
             # image_url=F("image"),  # Ensure image URL is included
-            myelocyte_score=F("classification__myelocyte_score"),
-            metamyelocyte_score=F("classification__metamyelocyte_score"),
-            neutrophil_score=F("classification__neutrophil_score"),
-            monocyte_score=F("classification__monocyte_score"),
-            eosinophil_score=F("classification__eosinophil_score"),
-            erythroid_precursor_score=F("classification__erythroid_precursor_score"),
-            lymphocyte_score=F("classification__lymphocyte_score"),
-            plasma_cell_score=F("classification__plasma_cell_score"),
-            blast_score=F("classification__blast_score"),
-            skippocyte_score=F("classification__skippocyte_score"),
-            basophil_score=F("classification__basophil_score"),
+            myelocyte_score=F("cellclassification__myelocytes_score"),
+            metamyelocyte_score=F("cellclassification__metamyelocytes_score"),
+            neutrophil_score=F("cellclassification__neutrophils_bands_score"),
+            monocyte_score=F("cellclassification__monocytes_score"),
+            eosinophil_score=F("cellclassification__eosinophils_score"),
+            erythroid_precursor_score=F("cellclassification__erythroid_precursors_score"),
+            lymphocyte_score=F("cellclassification__lymphocytes_score"),
+            plasma_cell_score=F("cellclassification__plasma_cells_score"),
+            blast_score=F("cellclassification__blasts_and_blast_equivalents_score"),
+            skippocyte_score=F("cellclassification__skippocyte_score"),
+            
         )
         .values(
-            "id", "image", "ai_class", "user_class",
+            "cell_id", "cell_image_path", "ai_class", "user_class",
             "myelocyte_score", "metamyelocyte_score", "neutrophil_score",
             "monocyte_score", "eosinophil_score", "erythroid_precursor_score",
             "lymphocyte_score", "plasma_cell_score", "blast_score",
-            "skippocyte_score", "basophil_score", 
+            "skippocyte_score", 
         )
         .order_by("user_class", "ai_class")
     )
-    print('classifications ', classifications.count())
 
     # Convert queryset into a structured dictionary in a single step
     classification_groups = defaultdict(list)
 
+    USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='True').lower() == 'true'
+
     for cls in classifications:
-        # Ensure None values do not cause missing classifications
+
         user_class = cls.pop("user_class", None)
         ai_class = cls.pop("ai_class", None)
+        class_label = user_class if user_class else ai_class
 
-        class_label = user_class if user_class else ai_class if ai_class else "unclassified"
+        if USE_AZURE_STORAGE:
+            # print('use blob')
+            image_path = cls.pop('cell_image_path')
+            if image_path:
+                print('image_path ', image_path)
+                filename = image_path.split('/')[-1]
+                try:
+                    response = get_blob_url("cells", filename)
+                    cls["image_url"] = response
+                    # print('cell_image_path == ', response)
+                except Exception as e:
+                    print(f'Error getting blob URL for { filename }: { str(e)}')
+                    cls["image_url"] = None
+            else:
+                cls['image_url'] = None
+        else:
+            cls["image_url"] = f"/media/{cls.pop('cell_image_path')}" if cls.get('cell_image_path') else None
 
-        cls["image_url"] = f"/media/{cls.pop('image')}" if cls.get("image") else None
+        # cls["image_url"] = f"/media/{cls.pop('image')}" if cls.get("image") else None
         classification_groups[class_label].append(cls)
 
+    # print('class groups ', classification_groups)
+
     for cell in classification_groups.get('metamyelocyte', []):
-        print(cell['image_url'])
+        print('EMTA ==== ', cell['image_url'])
 
-
-    # missing_cells = []
-    # for cls in classifications:
-    #     # class_label = cls.pop("user_class") or cls.pop('ai_class') # Extract class name
-    #     class_label = cls.pop("user_class") or cls.pop("ai_class") or "unclassified"
-    #     if not class_label:
-    #         missing_cells.append(cls)
-    #     cls["image_url"] = f"/media/{cls.pop('cell__image')}" if cls.get("cell__image") else None
-    #     classification_groups[class_label].append(cls)
 
     classification_groups = dict(classification_groups)
     print("Classification groups count:", len(classification_groups))
     for key, value in classification_groups.items():
         print(f"Group: {key}, Number of Cells: {len(value)}")
 
-
+    new_cell_total = sum(len(value) for key, value in classification_groups.items() if key != 'skippocytes')
+    skippocytes_counts = len(classification_groups.get("skippocytes", []))
 
     diff_view = CellStatsView()
     diff_counts = diff_view.get_diff_counts(case_id)
 
     context = {
+        'case': case,
         'diff_counts': diff_counts,
         'cell_groups': classification_groups,
         'cell_order': CELL_ORDER,
-        'cell_total': cell_total,
+        # 'cell_total': cell_total
+        'cell_total': new_cell_total,
+        'skippocytes_counts': skippocytes_counts,
     }
 
     return render (request, 'cases/case.html', context)
+
+
+def preview_popup(request):
+    return render(request, 'core/preview_popup.html')
 

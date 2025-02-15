@@ -10,7 +10,8 @@ urlpatterns = [
     path('', include(router.urls)),
 
     # CASE API VIEWS
-    path('<int:case_id>/save-screenshot/', views.save_screenshot, name='save-screenshot'),
-    path('<int:case_id>/save-recording/', views.save_recording, name='save-recording'),
+    path('<str:case_id>/save-screenshot/', views.save_screenshot, name='save-screenshot'),
+    path('<str:case_id>/save-recording/', views.save_recording, name='save-recording'),
+    path('<str:case_id>/update-status/', views.update_case_status, name='update_case_status'),
 
 ]
