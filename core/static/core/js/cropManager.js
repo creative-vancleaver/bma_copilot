@@ -72,6 +72,7 @@ export class CropManager {
         this.cropBox.style.height = height + 'px';
 
         const dimensions = this.NEWgetCropDimensions();
+        console.log('DIMENSIONS ', dimensions)
         this.uiManager.updateDimensions(
             this.screenShare.getTrueWidth(),
             this.screenShare.getTrueHeight(),
@@ -84,8 +85,19 @@ export class CropManager {
     endDraw() {
         this.isDrawing = false;
 
-        const { confirmRecordButton } = this.elements;
-        this.uiManager.updateConfirmRecordButton();
+        // Only enable confirm button if there's a valid crop selection
+        const cropBox = this.cropBox.getBoundingClientRect();
+        if (cropBox.width > 10 && cropBox.height > 10) {  // Ensure minimum size
+            this.uiManager.updateConfirmRecordButton(true);
+            let message = `Select <span>Confirm Region</span> to begin recording.`;
+            let statusType = 'active';
+            // this.uiManager.updateStatus("Click 'Confirm Recording' to start recording this region");
+            this.uiManager.updateStatus(message, statusType);
+        } else {
+            this.cropBox.style.display = 'none';  // Hide tiny/invalid selections
+            this.uiManager.updateConfirmRecordButton(false);
+            this.uiManager.updateStatus("Please select a larger preview area");
+        }
     }
 
     NEWgetCropDimensions() {
@@ -130,6 +142,8 @@ export class CropManager {
     resetCrop() {
         this.cropBox.style.display = 'none';
         this.ctx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+        this.uiManager.updateConfirmRecordButton(false);  // Disable confirm button on reset
+        this.uiManager.updateStatus("Please select a preview area");
     }
 
     updatePreview() {

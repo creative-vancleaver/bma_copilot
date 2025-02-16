@@ -1,5 +1,4 @@
-import { uploadState, updateProgressBar } from './uploadState.js';
-import { processingState } from './uploadState.js';
+import { uploadState, updateProgressBar, processingState, checkVideoStatus } from './uploadState.js';
 
 export class ScreenShare {
 
@@ -59,8 +58,13 @@ export class ScreenShare {
         resetCropButton.addEventListener('click', this.resetCrop);
     }
 
-    updateStatus(message) {
-        this.elements.statusDiv.textContent = message;
+    updateStatus(message, statusType) {
+        this.elements.statusDiv.innerHTML = message;
+        // REMOVE PREVIOUS STATUS CLASSES
+        this.elements.statusDiv.classList.remove("ready", "initialize", "recording");
+        if (statusType) {
+            this.elements.statusDiv.classList.add(statusType);
+        }
     }
 
     updateDimensions() {
@@ -143,6 +147,7 @@ export class ScreenShare {
         const recordingIndicator = document.getElementById('recordingIndicator');
         recordingIndicator.classList.remove('live');
         recordingIndicator.classList.add('active');
+        this.uiManager.updateConfirmRecordButton(false);  // Disable confirm button on reset
         
         this.updateStatus('Selection cleared - Click and drag again to select a new region');
     }
@@ -150,7 +155,7 @@ export class ScreenShare {
     async startScreenShare() {
         const { processingContainer, screenContainer, sharedScreen, cropOverlay, shareButton, stopButton, recordButton, controlPanel, navBar, statusPanel } = this.elements;
 
-        this.updateStatus('Click "Start Screen Share" and select the window or screen you want to share');
+        this.updateStatus(`Confirm screen sharing in your browser and select the window or screen you want to share.`);
 
         try {
 
@@ -180,6 +185,7 @@ export class ScreenShare {
             screenContainer.style.display = 'inline-block';
 
             sharedScreen.srcObject = this.stream;
+            // document.getElementById('screen-share-overlay').remove();
 
             recordButton.style.display = "inline-block";
 
@@ -193,14 +199,17 @@ export class ScreenShare {
 
             await sharedScreen.play();    
 
-            this.uiManager.updateStatus("Screen sharing started. Click and drag to select a preview area.");
+            // this.uiManager.updateStatus("Screen sharing started. Click and drag to select a preview area.");
             processingContainer.style.display = 'none';
             shareButton.style.display = "none";
             recordButton.style.display = "inline-block";
+            document.getElementById('mainContent').style.minHeight = '130vh';
 
             const recordingIndicator = document.getElementById('recordingIndicator');
             recordingIndicator.classList.add('active');
-            this.updateStatus(`Please select 'Start Recording' then drag to draw a box to crop the view region you want the AI to examine.`);
+            let message = `Select <span>Crop Region</span> then click and drag to crop the region you want the AI to examine.`;
+            let statusType = 'active';
+            this.updateStatus(message, statusType);
             this.updateDimensions();
 
             sharedScreen.style.display = 'block';
@@ -271,14 +280,27 @@ export class ScreenShare {
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
         this.uiManager.elements.stopRecordingButton.style.display = 'none';
+        document.getElementById('mainContent').style.minHeight = '50vh';        
 
     }
 
-    saveRecording() {
+    async saveRecording() {
 
         const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
         const formData = new FormData();
         formData.append("video", blob, 'screen-recording.webm');
+
+        // GET CROPPED REGION DIMENSIONS
+        const cropDimensions = this.uiManager.cropManager.NEWgetCropDimensions();
+        console.log('cropDimensions ', cropDimensions)
+        const cropData = {
+            TL_x: cropDimensions.left,
+            TL_y: cropDimensions.top,
+            BR_x: cropDimensions.left + cropDimensions.width,
+            BR_y: cropDimensions.top + cropDimensions.height
+        };
+        formData.append('crop_data', JSON.stringify(cropData))
+        console.log('formData ', formData)
 
         // RESET UPLOAD STATE
         uploadState.progress = 0;
@@ -286,72 +308,121 @@ export class ScreenShare {
         uploadState.error = null;
         updateProgressBar();
 
-        // TEST CASE
-        let case_id = 1;
+        try {
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `/api/cases/${ case_id }/save-recording/`, true);
+            // SEND REQUEST TO UPLOAD VIDEO
+            const response = await fetch(`/api/cases/save-recording/`, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFTOken': ScreenShare.getCSRFToken() }
+            });
 
-        // xhr.setRequestHeader('X-CSRFToken', ScreenShare.getCSRFToken());
+            if (!response.ok) {
+                throw new Error(`Server Error: ${ response.status }`);
+            }
 
-        xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const percentComplete = Math.round((event.loaded / event.total) * 100);
-                uploadState.progress = percentComplete;
+            const result = await response.json();
+            if (result.success) {
+                uploadState.status = 'completed';
                 updateProgressBar();
-            }
-        };
 
-        xhr.onload = () => {
-            if (xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    // Mark upload as completed
-                    uploadState.status = 'completed';
-                    uploadState.progress = 100;
-                    updateProgressBar();
-                    
-                    // Hide screen container
-                    this.elements.screenContainer.style.display = 'none';
-                    
-                    // Show processing container with explicit styles
-                    // const processingContainer = document.getElementById('processingContainer');
-                    // processingContainer.style.display = 'flex'; // Use flex instead of block
-                    // processingContainer.style.position = 'relative';
-                    // processingContainer.style.width = '100%';
-                    // // processingContainer.style.height = '100%';
-                    // processingContainer.style.justifyContent = 'center';
-                    // processingContainer.style.alignItems = 'center';
-                    // processingContainer.style.zIndex = '1000'; // Ensure it's above other elements
-                    
-                    // Start processing simulation after a short delay
-                    setTimeout(() => {
-                        this.simulateProcessing();
-                    }, 1500);
-                    
-                } else {
-                    uploadState.status = 'error';
-                    uploadState.error = response.error || 'Upload failed.';
-                    console.error('Upload failed: ', response.error);
-                }
+                // START CHECKING VIDEO PROCESSING STATUS
+                // checkVideoStatus(result.video_id);
+
             } else {
-                uploadState.status = 'error';
-                uploadState.error = 'Server Error';
-                console.error('upload failed: server returned status ', xhr.status);
+                throw new Error(result.error || 'Upload failed.');
             }
-            updateProgressBar();
-        };
 
-        xhr.onerror = () => {
+        } catch (error) {
+
             uploadState.status = 'error';
-            uploadState.error = 'Network Error';
+            uploadState.error = error.message;
+            console.log('upload error: ', error);
+
+        } finally {
             updateProgressBar();
-            console.error('Upload error: network failure.');
-        };
-
-        xhr.send(formData);
-
+        }
     }
+
+
+    // saveRecording() {
+
+    //     const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+    //     const formData = new FormData();
+    //     formData.append("video", blob, 'screen-recording.webm');
+
+    //     // RESET UPLOAD STATE
+    //     uploadState.progress = 0;
+    //     uploadState.status = 'uploading';
+    //     uploadState.error = null;
+    //     updateProgressBar();
+
+    //     // TEST CASE
+    //     // let case_id = 1;
+
+    //     const xhr = new XMLHttpRequest();
+    //     xhr.open('POST', `/api/cases/save-recording/`, true);
+
+    //     xhr.setRequestHeader('X-CSRFToken', ScreenShare.getCSRFToken());
+
+    //     xhr.upload.onprogress = (event) => {
+    //         if (event.lengthComputable) {
+    //             const percentComplete = Math.round((event.loaded / event.total) * 100);
+    //             uploadState.progress = percentComplete;
+    //             updateProgressBar();
+    //         }
+    //     };
+
+    //     xhr.onload = () => {
+    //         if (xhr.status === 200) {
+    //             const response = JSON.parse(xhr.responseText);
+    //             if (response.success) {
+    //                 // Mark upload as completed
+    //                 uploadState.status = 'completed';
+    //                 uploadState.progress = 100;
+    //                 updateProgressBar();
+                    
+    //                 // Hide screen container
+    //                 this.elements.screenContainer.style.display = 'none';
+                    
+    //                 // Show processing container with explicit styles
+    //                 // const processingContainer = document.getElementById('processingContainer');
+    //                 // processingContainer.style.display = 'flex'; // Use flex instead of block
+    //                 // processingContainer.style.position = 'relative';
+    //                 // processingContainer.style.width = '100%';
+    //                 // // processingContainer.style.height = '100%';
+    //                 // processingContainer.style.justifyContent = 'center';
+    //                 // processingContainer.style.alignItems = 'center';
+    //                 // processingContainer.style.zIndex = '1000'; // Ensure it's above other elements
+                    
+    //                 // Start processing simulation after a short delay
+    //                 // setTimeout(() => {
+    //                 //     this.simulateProcessing();
+    //                 // }, 1500);
+                    
+    //             } else {
+    //                 uploadState.status = 'error';
+    //                 uploadState.error = response.error || 'Upload failed.';
+    //                 console.error('Upload failed: ', response.error);
+    //             }
+    //         } else {
+    //             uploadState.status = 'error';
+    //             uploadState.error = 'Server Error';
+    //             console.error('upload failed: server returned status ', xhr.status);
+    //         }
+    //         updateProgressBar();
+    //     };
+
+    //     xhr.onerror = () => {
+    //         uploadState.status = 'error';
+    //         uploadState.error = 'Network Error';
+    //         updateProgressBar();
+    //         console.error('Upload error: network failure.');
+    //     };
+
+    //     xhr.send(formData);
+
+    // }
 
     stopSharing() {
         const { sharedScreen, cropOverlay, cropBox, shareButton, 
@@ -386,6 +457,11 @@ export class ScreenShare {
         confirmRecordButton.style.display = 'none';
 
         this.updateStatus('Screen capture ended');
+        // setTimeout(() => {
+        //     let message = `Ready to share screen. Click <span>Start Screen Share</span> to begin!`;
+        //     let statusType = 'initialize';
+        //     this.updateStatus(message, statusType);
+        // }, 15000);
         this.elements.dimensionsDiv.textContent = 'Resolution: Not sharing';
 
         this.ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
@@ -566,7 +642,9 @@ export class ScreenShare {
 
     initialize() {
         this.initializeEventListeners();
-        this.updateStatus('Ready to share screen');
+        let message = `Ready to share screen. Click <span>Start Screen Share</span> to begin!`;
+        let statusType = 'initialize';
+        this.updateStatus(message, statusType);
     }
 
     static getCSRFToken() {

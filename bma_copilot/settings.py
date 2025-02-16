@@ -36,8 +36,9 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
 
-    'rest_framework',
-    'rest_framework_simplejwt',
+    # CAN ADD LATER IF NEEDED
+    # 'rest_framework',
+    # 'rest_framework_simplejwt',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -184,37 +185,38 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # DJANGO REST FRAMEWORK CONFIG
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASES': (
-        'reset_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASES': (
+#         'reset_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticated',
+#     ],
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 10,
+# }
 
-REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
-    'rest_framework.throttling.AnonRateThrottle',
-    'rest_framework.throttling.UserRateThrottle',
-]
+# REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
+#     'rest_framework.throttling.AnonRateThrottle',
+#     'rest_framework.throttling.UserRateThrottle',
+# ]
 
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
-    'anon': '100/day',
-    'user': '1000/day',
-}
+# REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+#     'anon': '100/day',
+#     'user': '1000/day',
+# }
 
 # JSON WEB TOKEN CONFIG -- expire after 1 day
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,  # Ensure your SECRET_KEY is properly set
-    'AUTH_HEADER_TYPES': ('Bearer',),  # Ensures the token is sent with 'Bearer'
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'ALGORITHM': 'HS256',
+#     'SIGNING_KEY': SECRET_KEY,  # Ensure your SECRET_KEY is properly set
+#     'AUTH_HEADER_TYPES': ('Bearer',),  # Ensures the token is sent with 'Bearer'
+# }
+
 # CELERY TASK CONFIG
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
@@ -224,7 +226,8 @@ CELERY_TASK_SERIALIZER = 'json'
 AZURE_STORAGE_CONNECTION_STRING = config('AZURE_STORAGE_CONNECTION_STRING')
 AZURE_STORAGE_CONTAINER = config('AZURE_STORAGE_CONTAINER')
 
-LOGIN_URL = "/login/"
+# LOGIN_URL = "/login/"
+LOGIN_URL = '/login/?next=' # REDIRECTS BACK TO ORIGINAL PAGE
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # Default backend
 )

@@ -5,7 +5,7 @@ from django.shortcuts import render
 from decouple import config
 
 from cells.models import Cell, CellClassification
-from cells.views import CellStatsView
+from cells.views import CellView
 from .services.azure_blob_service import get_blob_url
 from cases.models import Case
 
@@ -13,10 +13,15 @@ CELL_ORDER = [
     'blasts_and_blast_equivalents', 'promyelocytes', 'myelocytes', 'metamyelocytes', 'neutrophils', 'monocytes', 'eosinophils', 'lymphocytes', 'plasma_cells', 'erythroid_precursors', 'skippocytes',
 ]
 
-@login_required
 def index(request):
 
     return render(request, 'core/index.html')
+
+@login_required
+def microscope_viewer(request):
+    # print('case ID === ', case_id)
+
+    return render(request, 'cases/microscope_viewer.html')
 
 @login_required
 def case(request, case_id):
@@ -29,6 +34,7 @@ def case(request, case_id):
     classifications = (
         Cell.objects
         .filter(region__video_id__case=case)
+        .select_related('cellclassification')
         .annotate(
             ai_class=F("cellclassification__ai_cell_class"),
             user_class=F("cellclassification__user_cell_class"),
@@ -62,8 +68,10 @@ def case(request, case_id):
 
     for cls in classifications:
 
-        user_class = cls.pop("user_class", None)
-        ai_class = cls.pop("ai_class", None)
+        # user_class = cls.pop("user_class", None)
+        # ai_class = cls.pop("ai_class", None)
+        user_class = cls['user_class']
+        ai_class = cls['ai_class']
         class_label = user_class if user_class else ai_class
 
         if USE_AZURE_STORAGE:
@@ -87,12 +95,6 @@ def case(request, case_id):
         # cls["image_url"] = f"/media/{cls.pop('image')}" if cls.get("image") else None
         classification_groups[class_label].append(cls)
 
-    # print('class groups ', classification_groups)
-
-    for cell in classification_groups.get('metamyelocyte', []):
-        print('EMTA ==== ', cell['image_url'])
-
-
     classification_groups = dict(classification_groups)
     print("Classification groups count:", len(classification_groups))
     for key, value in classification_groups.items():
@@ -101,7 +103,7 @@ def case(request, case_id):
     new_cell_total = sum(len(value) for key, value in classification_groups.items() if key != 'skippocytes')
     skippocytes_counts = len(classification_groups.get("skippocytes", []))
 
-    diff_view = CellStatsView()
+    diff_view = CellView()
     diff_counts = diff_view.get_diff_counts(case_id)
 
     context = {

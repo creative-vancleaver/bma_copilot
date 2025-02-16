@@ -1,6 +1,6 @@
 export class UIManager {
     constructor(screenShare) {
-        // this.cropManager = cropManager;
+        this.cropManager = null;
         this.screenShare = screenShare;
         // DOM elements
         this.elements = {
@@ -32,6 +32,10 @@ export class UIManager {
 
         this.record = false;
 
+    }
+
+    setCropManager(cropManger) {
+        this.cropManager = cropManger;
     }
 
     initialize(screenShare, cropManager) {
@@ -251,20 +255,16 @@ export class UIManager {
 
     showConfirmRecordButton() {
         this.elements.confirmRecordButton.style.display = "inline-block";
-        // DISABLE BUTTON UNTIL AFTER SELECTION IS MADE
-        this.elements.confirmRecordButton.disabled = true;
-        this.elements.confirmRecordButton.style.cursor = 'not-allowed';
-        this.elements.confirmRecordButton.style.opacity = 0.5;
+        // Ensure button starts disabled
+        this.updateConfirmRecordButton(false);
         this.elements.recordButton.style.display = 'none';
         this.updateStatus("Please select a preview area.");
     }
 
-    updateConfirmRecordButton() {
-        console.log('confirm button activated')
-        this.elements.confirmRecordButton.style.cursor = 'pointer';
-        this.elements.confirmRecordButton.style.opacity = 1;
-        this.elements.confirmRecordButton.disabled = false;
-
+    updateConfirmRecordButton(enable = false) {
+        this.elements.confirmRecordButton.disabled = !enable;
+        this.elements.confirmRecordButton.style.cursor = enable ? 'pointer' : 'not-allowed';
+        this.elements.confirmRecordButton.style.opacity = enable ? 1 : 0.5;
     }
 
     lockToPreviewArea() {
@@ -290,8 +290,12 @@ export class UIManager {
         this.updateStatus('Recording stopped');
     }
 
-    updateStatus(message) {
-        this.elements.statusDiv.textContent = message;
+    updateStatus(message, statusType) {
+        // this.elements.statusDiv.textCinontent = message;
+        this.elements.statusDiv.innerHTML = message;
+        if (statusType) {
+            this.elements.statusDiv.classList.add(statusType);
+        }
     }
 
     updateDimensions(trueWidth, trueHeight, cropWidth, cropHeight, scale) {

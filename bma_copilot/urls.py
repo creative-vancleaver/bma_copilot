@@ -4,10 +4,6 @@ from django.contrib import admin
 from django.urls import path, include
 # from users.views import user_login  # Import the login view
 
-from rest_framework_simplejwt.views import(
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 
 urlpatterns = [
 
@@ -15,10 +11,6 @@ urlpatterns = [
 
     # HOME PAGE
     path('', include('core.urls')),
-
-    # JWT USER AUTH PATHS
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pari'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # API PATHS
     path('api/cases/', include('cases.urls')),

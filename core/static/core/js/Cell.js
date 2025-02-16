@@ -22,20 +22,23 @@ class Cell {
 
     static cellItemClickHandler(element) {
 
-        $(element).on('click', function() {
+        let caseStatus = document.getElementById('caseStatus');
+        if (!caseStatus) {
+            $(element).on('click', function() {
 
-            let cell_id = $(this).data('id');
-
-            $('.cell-image').not(this).removeClass('clicked');
-            $(this).toggleClass('clicked');
-            $(this).attr('tabindex', 0).focus();
-            $('.cell-image').off('keyup');
-
-            $(this).on('keyup', function(event) {
-                console.log('keyup ', event);
-                Cell.labelEventListener(event, cell_id);
+                let cell_id = $(this).data('id');
+    
+                $('.cell-image').not(this).removeClass('clicked');
+                $(this).toggleClass('clicked');
+                $(this).attr('tabindex', 0).focus();
+                $('.cell-image').off('keyup');
+    
+                $(this).on('keyup', function(event) {
+                    console.log('keyup ', event);
+                    Cell.labelEventListener(event, cell_id);
+                });
             });
-        });
+        }
     }
 
 	static label_dict = {
@@ -75,21 +78,36 @@ class Cell {
 
 	}
 
+    static getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     static labelCurrentCell(label, cell_id) {
         console.log('label ', label)
 
-        const DEV_TOKEN = Cell.devToken();
         let case_id = window.location.pathname.split('/')[2]
         console.log(case_id);
         // case_id = '1';
 
 		//Update record in database
-		fetch(`/api/cells/stats/${ case_id }/`, {
+		fetch(`/api/cells/cell/${ case_id }/`, {
             method: 'POST',
             headers: {
+                'X-CSRFToken': Cell.getCookie('csrftoken'),
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${ DEV_TOKEN }`
             },
+            credentials: "include",
             body: JSON.stringify({
                 cell_id: cell_id,
                 cell_label: label
@@ -141,6 +159,7 @@ class Cell {
             targetSection.querySelector('.cell-images').prepend(old_cell[0]);
 
             old_cell.removeClass('clicked');
+            old_cell.addClass('changed');
             old_cell.attr('data-class', new_label);
             old_cell.find('img').attr("alt", new_label);
             old_cell.off('click');

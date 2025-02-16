@@ -17,6 +17,14 @@ class Case {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // ENSURE CELLS CANNOT BE CHANGED AFTER CASE-CLOSED
+                $('.cell-image').off('click keyup');
+                let title = document.getElementById('cellTitle');
+                let status = document.createElement('span');
+                status.id = 'caseStatus';
+                status.classList.add('case-status');
+                status.innerHTML = newStatus;
+                title.append(status);
                 alert(`Status updated to: ${ data.new_status }`);
                 $('#closeCase').text('Case Closed');
             } else {

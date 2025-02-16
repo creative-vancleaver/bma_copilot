@@ -12,11 +12,11 @@ def redirect_authenticated_user(user):
     # RETURNS FALSE IF USER IS LOGGED IN - TRIGGERING REDIRECT
     return not user.is_authenticated
 
-@user_passes_test(redirect_authenticated_user, login_url='home')
+@user_passes_test(redirect_authenticated_user, login_url='microscope-viewer')
 def register_user(request):
 
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('microscope-viewer')
     
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -26,7 +26,7 @@ def register_user(request):
             user.save()
             login(request, user) # LOG USER IN AFTER REGISTRATION
             messages.success(request, "Registration success. Welcome!")
-            return redirect('home')
+            return redirect('microscope-viewer')
         else:
             messages.error(request, "please correct the errors below.")
         
@@ -35,11 +35,11 @@ def register_user(request):
 
     return render(request, 'registration/register.html', { "form": form })
 
-@user_passes_test(redirect_authenticated_user, login_url='home')
+@user_passes_test(redirect_authenticated_user, login_url='microscope-viewer')
 def user_login(request):
 
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('microscope-viewer')
 
     if request.method == "POST":
         email = request.POST.get('email')
@@ -48,7 +48,7 @@ def user_login(request):
         
         if user is not None:
             login(request, user)
-            return redirect('home')
+            return redirect('microscope-viewer')
         else:
             return render(request, 'core/login.html', {'form': {'errors': True}})
 

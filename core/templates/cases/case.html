@@ -2,8 +2,6 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Case {{ case.name }}{% endblock %}
-
 {% block head %}
 <style>
     .container {
@@ -116,12 +114,13 @@
 
     .cell-name {
         flex-grow: 1;
+        text-align: left;
     }
 
     .percent {
         text-align: right;
         min-width: 50px;
-        margin-left: auto;
+        margin-left: 10px;
     }
     
     .percentage {
@@ -140,6 +139,10 @@
     .cell-link a {
         text-decoration: none;
         color: inherit;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
     }
 
     .cell-link:hover {
@@ -159,6 +162,25 @@
         overflow: hidden;
     }
 </style>
+<script type="module">
+    import { startTour } from "{% static 'core/js/Tour.js' %}";
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        if (!localStorage.getItem('tourCompleted')) {
+            startTour();
+        }
+
+        // Attach the tour to the Help button in the navbar
+        const helpButton = document.getElementById("help");
+        if (helpButton) {
+            helpButton.addEventListener("click", function () {
+                startTour();
+            });
+        }
+        
+    });
+</script>
 <script src="{% static 'core/js/Cell.js' %}"></script>
 <script src="{% static 'core/js/Case.js' %}"></script>
 {% endblock head %}
@@ -181,19 +203,19 @@
                 <h5>Cell Total: {{ cell_total }}</h5>
                 <ul>
                     {% for cell_type, percentage in diff_counts.items %}
-                            <li class="cell-link">
-                                <a href="#{{ cell_type }}_anchor">
-                                    <span class="cell-name">{{ cell_type|replace:"_ "|title }} </span>
-                                    <span id="{{ cell_type }}_percent" class="percent">
-                                        {{ percentage }}%
-                                    </span>
-                                </a>
-                            </li>
+                        <li class="cell-link">
+                            <a href="#{{ cell_type }}_anchor">
+                                <span class="cell-name">{{ cell_type|replace:"_ "|title }}</span>
+                                <span id="{{ cell_type }}_percent" class="percent">
+                                    {{ percentage }}%
+                                </span>
+                            </a>
+                        </li>
                     {% endfor %}
 
                     <li class="mt-3 cell-link">
                         <a href="#skippocytes">
-                        Skippocytes 
+                            <span class="cell-name">Skippocytes</span>
                             <span id="{{ skippocytes }}_percent" class="percent">
                                 {{ skippocytes_counts }}
                             </span>
@@ -211,7 +233,7 @@
                     </button>
                 {% else %}
                     <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed">
-                        Sign Out
+                        Close Case
                     </button>
                 {% endif %}
             </div>
@@ -219,12 +241,12 @@
 
         <div class="content">
             <div class="classification-header">
-                <h2 class='classification-title'>
+                <h2 id="cellTitle" class='classification-title'>
                     Cell Classifications
                     {% if case.case_status == 'completed' %}
-                        <span class='case-status'>Completed</span>
+                        <span id="caseStatus" class='case-status'>Completed</span>
                     {% elif case.case_status == 'archived' %}
-                        <span class='case-status'>Archived</span>
+                        <span id="caseStatus" class='case-status'>Archived</span>
                     {% endif %}
                 </h2>
             </div>
@@ -239,7 +261,13 @@
                                 {% with cell_groups|get_item:class_name as cells %}        
                                     {% for cell in cells %}
                                         {% if cell.image_url %}
-                                            <div class="cell-image" data-class="{{ class_name }}" data-id="{{ cell.cell_id }}">
+                                            <div 
+                                                class="cell-image"
+                                                data-ai-class="{{ cell.ai_class }}"
+                                                data-user-class="{{ cell.user_class }}"
+                                                data-class="{{ class_name }}" 
+                                                data-id="{{ cell.cell_id }}"
+                                            >
                                                 <img src="{{ cell.image_url }}" alt="{{ class_name }}">
                                             </div>
                                         {% else %}
@@ -272,7 +300,39 @@
                 Case.updateCaseStatus(case_id, status);
             });
             
+            // Add smooth scrolling for anchor links
+            $('.sidebar a[href^="#"]').on('click', function(e) {
+                e.preventDefault();
+                
+                // Get the target element ID without the #
+                const targetId = this.getAttribute('href').slice(1);
+                const target = document.getElementById(targetId);
+                
+                if (target) {
+                    const navbarHeight = $('#navBar').outerHeight();
+                    const offset = target.offsetTop - navbarHeight - 20; // 20px extra padding
+                    
+                    $('html, body').animate({
+                        scrollTop: offset
+                    }, 500);
+                }
+            });
         });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".cell-image img").forEach((img) => {
+                img.onload = function () {
+                    let parentDiv = img.closest(".cell-image");
+                    let aiClass = parentDiv.dataset.aiClass;
+                    let userClass = parentDiv.dataset.userClass;
+        
+                    if (aiClass !== userClass) {
+                        parentDiv.classList.add("changed");
+                    }
+                };
+            });
+        });
+
     </script>
 
 {% endblock content %}
