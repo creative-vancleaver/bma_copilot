@@ -10,10 +10,10 @@
     --text-secondary: #666666;
     --border-color: #e2e8f0;
 
-    --case-color: #5B4FB8;
-    --case-dark: #342170;
-    --accent-color: #C2A3D5;
-    --bg-color: #E0C4DE;
+    --case-color: #7574c4;
+    --case-dark: #270f7e;
+    --accent-color: #6741b2;
+    --bg-color: #bd97b2;
     --text-color: #fff;
 
 }
@@ -438,8 +438,8 @@ video#sharedScreen {
 
 /* CELL STYLES */
 .clicked {
-    transform: scale(1.05);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.74);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 

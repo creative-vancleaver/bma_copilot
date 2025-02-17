@@ -50,8 +50,8 @@ export function updateProgressBar() {
 
         // REDIRECT AFTER PROCESSING COMPLETE
         setTimeout(() => {
-            window.location.href = `/case/${ caseId }`;
-        });
+            window.location.href = `/case/${ processingState.caseId }`;
+        }, 1500);
 
     } else if (uploadState.status === 'completed') {
 
@@ -88,11 +88,16 @@ function createProgressBar() {
 export function checkVideoStatus(videoId) {
 
     const processingContainer = document.getElementById('processingContainer');
-    const MAX_CHECK_TIME = 300000 // 5 MINUTES
+    const MAX_CHECK_TIME = 6000000 // 10 MINUTES
     const CHECK_INTERVAL = 3000; // 3 SECONDS
     let elapsedTime = 0;
 
-    const caseId = videoId.split('_')[1];
+    const extractCaseId = (str) => {
+        let [first, second] = str.split('_');
+        return second ? `${ first }_${ second }` : first;
+    }
+
+    const caseId = extractCaseId(videoId);
 
     async function fetchStatus() {
         try {
@@ -114,6 +119,7 @@ export function checkVideoStatus(videoId) {
 
             // PARSE NESTED JSON STRING
             const data = JSON.parse(getResponseData.body);
+            console.log('data = ', data)
 
             if (getResponse.ok) {
                 processingState.caseId = caseId;
