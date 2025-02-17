@@ -8,14 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const uiManager = new UIManager();
     const screenShare = new ScreenShare(uiManager);
+
+    uiManager.setScreenShare(screenShare);
+
     const cropManager = new CropManager(screenShare, uiManager);
+
+    uiManager.setCropManager(cropManager);
 
     // Initialize the application
     uiManager.initialize(screenShare, cropManager);
     screenShare.initialize();
-    cropManager.initialize(screenShare);
-
-    uiManager.setCropManager(cropManager);
+    cropManager.initialize();
 
     // console.log("✅ UI components initialized.");  // ✅ Debugging log
 

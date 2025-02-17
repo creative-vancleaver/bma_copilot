@@ -123,10 +123,23 @@ class Cell {
                     // UPDATE CELL COUNT DISPLAY?
                 // });
 
-                for (const [cellType, percentage] of Object.entries(data.diff_counts)) {
-                    let diffElement = document.querySelector(`#${ cellType }_percent`);
-                    diffElement.innerHTML = `${ percentage }%`
+                // for (const [cellType, percentage] of Object.entries(data.diff_counts)) {
+                //     let diffElement = document.querySelector(`#${ cellType }_percent`);
+                //     diffElement.innerHTML = `${ percentage }%`
+                // }
 
+                for (const[cellType, percentage] of Object.entries(data.diff_counts.percentages)) {
+                    let diffElement = document.querySelector(`#${ cellType }_percent`);
+                    if (diffElement) {
+                        diffElement.innerHTML = `${ percentage }%`;
+                    }
+                }
+
+                for (const [cellType, count] of Object.entries(data.diff_counts.counts)) {
+                    let countElement = document.querySelector(`#${ cellType }_count`);
+                    if (countElement) {
+                        countElement.innerHTML = `(${ count })`;
+                    }
                 }
             }
         })

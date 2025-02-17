@@ -35,7 +35,6 @@ def save_recording(request):
         }, status=400)
     
     try:
-        print('crop data = ', json.loads(request.POST.get('crop_data')))
         if "video" not in request.FILES:
             return JsonResponse({
                 "success": False,
@@ -43,12 +42,23 @@ def save_recording(request):
             }, status=400)
         
         video_file = request.FILES["video"]
+        print('crop_data = ', request.POST.get('crop_data'))
+        # crop_data =  {"TL_x":112,"TL_y":184,"BR_x":998,"BR_y":910}
+        crop_data = json.loads(request.POST.get('crop_data'))
 
         # FOR NOW EACH VIDEO WILL BE A NEW CASE
         # case = Case.objects.get(case_id=case_id)
         case = Case.objects.create(user=request.user)
         case_id = case.case_id
-        
+
+        new_video = Video.objects.create(
+            case=case, 
+            TL_x=crop_data.get('TL_x'), 
+            TL_y=crop_data.get('TL_y'),
+            BR_x=crop_data.get('BR_x'),
+            BR_y=crop_data.get('BR_y'),    
+        )
+        print('new_video ========= ', new_video)        
 
         
         # Generate filename and path
@@ -79,6 +89,7 @@ def save_recording(request):
             return JsonResponse({
                 "success": True,
                 "case": case.case_id,
+                "video_id": new_video.video_id,
                 "filename": filename,
             })
             

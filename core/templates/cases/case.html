@@ -13,7 +13,7 @@
     }
 
     .sidebar {
-        width: 250px;
+        width: 300px;
         background: #f0ebf8;
         padding: 20px;
         height: 100vh;
@@ -119,8 +119,8 @@
 
     .percent {
         text-align: right;
-        min-width: 50px;
-        margin-left: 10px;
+        {% comment %} min-width: 50px;
+        margin-left: 10px; {% endcomment %}
     }
     
     .percentage {
@@ -150,6 +150,31 @@
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.19);
     }
 
+    .cell-name {
+        {% comment %} flex: 1;
+        text-align: left; {% endcomment %}
+        {% comment %} overflow: hidden;
+        text-overflow: ellipsis; {% endcomment %}
+    }
+
+    .count-percent {
+        {% comment %} display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-left: auto;
+        white-space: nowrap; {% endcomment %}
+        {% comment %} flex-shrink: 0; {% endcomment %}
+    }
+
+    .count {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .cell-link.skippocytes {
+        background-color: #f5f5f5;
+    }
+
     {% comment %} .cell-anchor:target::before {
         content: "";
         display: block;
@@ -160,6 +185,14 @@
     .cell-anchor {
         height: 0;
         overflow: hidden;
+    }
+
+    .export-buttons {
+        margin-top: 1rem;
+    }
+
+    .export-buttons .fas {
+        margin-right: 0.5rem;
     }
 </style>
 <script type="module">
@@ -202,7 +235,26 @@
                 <h3>Differential Count</h3>
                 <h5>Cell Total: {{ cell_total }}</h5>
                 <ul>
-                    {% for cell_type, percentage in diff_counts.items %}
+                    {% for class_name in cell_order %}
+                        {% if class_name != 'skippocytes' %}
+                            <li class="cell-link">
+                                <a href="#{{ class_name }}_anchor">
+                                    <span class="cell-name">{{ class_name|abbreviate_cell_type }}</span>
+                                    <span class="count-percent">
+                                        <span id="{{ class_name }}_count" class="count">
+                                            ({{ diff_counts.counts|get_item:class_name }})
+                                        </span>
+                                        <span id="{{ class_name }}_percent" class="percent">
+                                            {{ diff_counts.percentages|get_item:class_name }}
+                                            <sup style="margin-left: -5px;">%</sup>
+                                        </span>
+                                    </span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% comment %} {% for cell_type, percentage in diff_counts.items %}
                         <li class="cell-link">
                             <a href="#{{ cell_type }}_anchor">
                                 <span class="cell-name">{{ cell_type|replace:"_ "|title }}</span>
@@ -211,7 +263,7 @@
                                 </span>
                             </a>
                         </li>
-                    {% endfor %}
+                    {% endfor %} {% endcomment %}
 
                     <li class="mt-3 cell-link">
                         <a href="#skippocytes">
@@ -223,6 +275,18 @@
                     </li>
 
                 </ul>
+
+                <div class="export-buttons mt-3">
+                    <button id="copyDiff" class="btn btn-secondary btn-sm w-100 mb-2">
+                        <i class="fas fa-clipboard"></i>
+                        Copy to Clipboard
+                    </button>
+                    <button id="saveReport" class="btn btn-secondary btn-sm w-100">
+                        <i class="fas fa-download"></i>
+                        Save Report
+                    </button>
+                </div>
+
             </div>
 
             <div class="sidebar-section">
@@ -317,6 +381,54 @@
                     }, 500);
                 }
             });
+
+            $('#copyDiff').on('click', function() {
+                let diffText = 'Differential Count Report\n';
+                diffText += '=========================\n';
+                diffText += `Total Cells: ${$('h5').text().split(': ')[1]}\n\n`;
+
+                // GET ALL CELL TYPES + THEIR PRECENTAGES
+                $('.cell-link').each(function() {
+                    const cellName = $(this).find('.cell-name').text().trim();
+                    const count = $(this).find('.count').text().trim();
+                    const percent = $(this).find('.percent').text().trim();
+                    diffText += `${ cellName }: ${ count } ${ percent }\n`;
+                });
+
+                // COPY TO CLIPBOARD 
+                navigator.clipboard.writeText(diffText).then(() => {
+                    alert('Differntial copied to clipboard.');
+                }).catch(error => {
+                    console.error('Failed to copy text: ', e);
+                });
+            });
+
+            $('#saveReport').on('click', function() {
+                // CREATE FULL REPORT CONTENT 
+                let reportContent = document.documentElement.cloneNode(true);
+
+                // ADD TIMESTAMP TO REPORT
+                const timestamp = new Date().toLocaleString();
+                const timeHeader = document.createElement('div');
+                timeHeader.innerHTML = `<h4>Report Generated: ${ timestamp }</h4>`;
+                reportContent.querySelector('.sidebar-header').prepend(timeHeader);
+
+                // CONVERT TO STRING 
+                const htmlContent = reportContent.outerHTML;
+                
+                // CREATE BLOB + DOWNLOAD
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `case-${$('#case-id').text()}-report-${ new Date().toISOString().split('T')[0]}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            });
+
+
         });
 
         document.addEventListener("DOMContentLoaded", function () {

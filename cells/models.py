@@ -31,6 +31,7 @@ def cell_image_path(instance, filename):
     )
 
 class Cell(CustomIDMixin, models.Model):
+    print("[DEBUG] Cell model is being loaded...")  # <-- Should print when Django loads the model  
     cell_id = models.CharField(primary_key=True, max_length=255, unique=True, default=None)
     cell_image_path = models.CharField(max_length=255, blank=True, null=True)
     region = models.ForeignKey(Region, db_column='region_id', to_field='region_id', on_delete=models.CASCADE)
@@ -42,12 +43,16 @@ class Cell(CustomIDMixin, models.Model):
     BR_x_in_region = models.FloatField(blank=True, null=True)
     BR_y_in_region = models.FloatField(blank=True, null=True)
 
+    date_added = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return self.cell_id
     
     def save(self, *args, **kwargs):
         if not self.cell_id:
-            self.cell_id = self.generate_custom_id()
+            self.cell_id = self.generate_custom_id(region_id=self.region.region_id)
+
+        super().save(*args, **kwargs)
 
     class Meta:
         # managd = False

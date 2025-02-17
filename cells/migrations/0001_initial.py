@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Cell',
             fields=[
-                ('cell_id', models.CharField(default=users.models.CustomIDMixin.generate_custom_id, max_length=255, primary_key=True, serialize=False, unique=True)),
+                ('cell_id', models.CharField(default=None, max_length=255, primary_key=True, serialize=False, unique=True)),
                 ('cell_image_path', models.CharField(blank=True, max_length=255, null=True)),
                 ('image', models.ImageField(blank=True, null=True, upload_to=models.CharField(blank=True, max_length=255, null=True))),
                 ('center_x_in_region', models.FloatField(blank=True, null=True)),

@@ -36,3 +36,4 @@ create_azure_db.py
 cases_backup.csv
 test_adding_to_db.py
 dump.rdb
+schema_output.txt

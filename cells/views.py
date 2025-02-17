@@ -64,10 +64,23 @@ class CellView(View):
         total_cells = sum(item['cell_count'] for item in filtered_counts)
 
         if total_cells == 0:
-            return {class_name: 0.0 for class_name in CELL_ORDER if class_name != "skippocytes"}
+            return {
+                'percentages': { class_name: 0.0 for class_name in CELL_ORDER if class_name != 'skippocytes' },
+                'counts': {item['class_name']: item['cell_count'] for item in cell_counts }
+                # class_name: 0.0 for class_name in CELL_ORDER if class_name != "skippocytes"
+            }
         
-        diff = { item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
-            for item in filtered_counts }
+        diff = {
+            'percentages': {
+                item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
+                for item in filtered_counts
+            },
+            'counts': {
+                item['class_name']: item['cell_count'] for item in cell_counts
+            }
+            # item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
+            # for item in filtered_counts
+        }
         print(diff)
         
         return diff

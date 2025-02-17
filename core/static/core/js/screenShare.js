@@ -291,7 +291,8 @@ export class ScreenShare {
         formData.append("video", blob, 'screen-recording.webm');
 
         // GET CROPPED REGION DIMENSIONS
-        const cropDimensions = this.uiManager.cropManager.NEWgetCropDimensions();
+
+        const cropDimensions = this.uiManager.videoCropDimensions();
         console.log('cropDimensions ', cropDimensions)
         const cropData = {
             TL_x: cropDimensions.left,
@@ -323,12 +324,26 @@ export class ScreenShare {
 
             const result = await response.json();
             if (result.success) {
+                console.log('results = ', result);
                 uploadState.status = 'completed';
                 updateProgressBar();
 
-                // START CHECKING VIDEO PROCESSING STATUS
-                // checkVideoStatus(result.video_id);
+                // CREATE VIDEO STATUS
+                const postResponse = await fetch('/api/cases/video-status/', {
+                    method: 'POST',
+                    headers: {
+                        'Cotent-Type': 'application/json',
+                        'X-CSRFToken': ScreenShare.getCSRFToken()
+                    },
+                    body: JSON.stringify({ video_id : result.video_id })
+                });
+                console.log('postResponse ', postResponse);
 
+                if (!postResponse.ok) {
+                    throw new Error(`Failed to create video status: ${ postResponse.status }`);
+                }
+                checkVideoStatus(result.video_id);
+                
             } else {
                 throw new Error(result.error || 'Upload failed.');
             }

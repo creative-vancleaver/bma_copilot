@@ -1,7 +1,8 @@
 export class UIManager {
     constructor(screenShare) {
         this.cropManager = null;
-        this.screenShare = screenShare;
+        this.screenShare = null;
+        this.cropDimensions = null;
         // DOM elements
         this.elements = {
 
@@ -36,6 +37,10 @@ export class UIManager {
 
     setCropManager(cropManger) {
         this.cropManager = cropManger;
+    }
+
+    setScreenShare(screenShare) {
+        this.screenShare = screenShare;
     }
 
     initialize(screenShare, cropManager) {
@@ -310,5 +315,12 @@ export class UIManager {
 
     getElements() {
         return this.elements;
+    }
+
+    videoCropDimensions(dimensions) {
+        if (dimensions) {
+            this.cropDimensions = dimensions;
+        }
+        return this.cropDimensions;
     }
 }

@@ -426,6 +426,14 @@ video#sharedScreen {
     color: #22c55e;  /* Green color for "Screen capture live" */
 }
 
+#progressBar .uploading {
+    background-color: #4CAF50;
+}
+
+#progressBar .processing {
+    background-color:  #2196F3;;
+}
+
 
 
 /* CELL STYLES */

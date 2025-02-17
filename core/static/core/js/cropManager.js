@@ -72,6 +72,7 @@ export class CropManager {
         this.cropBox.style.height = height + 'px';
 
         const dimensions = this.NEWgetCropDimensions();
+        this.uiManager.videoCropDimensions(dimensions)
         console.log('DIMENSIONS ', dimensions)
         this.uiManager.updateDimensions(
             this.screenShare.getTrueWidth(),

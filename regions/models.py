@@ -35,12 +35,16 @@ class Region(CustomIDMixin, models.Model):
 
     group_id = models.IntegerField(blank=True, null=True)
 
+    date_added = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return self.region_id
     
     def save(self, *args, **kwargs):
         if not self.region_id:
-            self.region_id = self.generate_custom_id()
+            self.region_id = self.generate_custom_id(video_id=self.video_id.video_id)
+
+        super().save(*args, **kwargs)
     
     class Meta:
         # managd = False
