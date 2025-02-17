@@ -23,8 +23,6 @@ def upload_to_azure_blob(file_obj, filename):
         print('use azure storage')
         connection_string = settings.AZURE_STORAGE_CONNECTION_STRING
         container_name = settings.AZURE_STORAGE_CONTAINER
-        print('blob connection string: ', connection_string[:30])
-        print('container name ', container_name)
 
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         container_client = blob_service_client.get_container_client(container_name)

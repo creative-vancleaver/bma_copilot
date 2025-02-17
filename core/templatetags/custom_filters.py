@@ -29,3 +29,12 @@ def replace(value, args):
 @register.filter
 def add_class(field, css_class):
     return field.as_widget(attrs={"class": css_class}) 
+
+@register.filter
+def abbreviate_cell_type(value):
+    abbreviations = {
+        'blasts_and_blast_equivalents': 'Blasts',
+        'erythroid_precursors': 'Erythroids',
+    }
+
+    return abbreviations.get(value, value.replace('_', ' ').title())

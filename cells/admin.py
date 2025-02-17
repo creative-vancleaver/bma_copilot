@@ -5,7 +5,7 @@ from .models import Cell, CellDetection, CellClassification
 @admin.register(Cell)
 class CellAdmin(admin.ModelAdmin):
 
-    list_display = ('cell_id', 'get_region_id', 'get_case_id', 'image')
+    list_display = ('cell_id', 'get_region_id', 'get_case_id', 'date_added')
     search_fields = ('cell_id', 'region__region_id')
 
     def get_region_id(self, obj):

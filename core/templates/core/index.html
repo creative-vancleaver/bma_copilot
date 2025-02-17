@@ -2,96 +2,67 @@
 {% load static %}
 
 {% block head %}
-    <script type="module" src="{% static 'core/js/main.js' %}"></script>
+    {% comment %} <script type="module" src="{% static 'core/js/main.js' %}"></script> {% endcomment %}
 {% endblock head %}
 
     {% block content %}
-        <header class="app-header">
-            <h1>BMACopilot - Smart Screen Capture Prototype</h1>
+        <header class="app-header" style="padding-top: 3rem;">
+            <h1>BMACopilot</h1>
             <p class="app-description">
-                Automatically track and analyze your microscope camera feed in real-time
-                <ol class="instructions">
-                    <li>Click "Start Screen Share" and select the microscope mounted camera output window.</li>
-                    <li>Once sharing begins, select 'Start Recording'.</li>
-                    <li>Click and drag on the screen to select the specific region containing your microscope view anc click 'Confirm Recording</li>
-                    <li>A live preview of your selected region will appear in the right panel. Use "Reset Selection" to adjust if needed, or "Stop Sharing" when done</li>
-                    <li>Proceed with your normal BMA interpretation workflow! The selected region will be automatically monitored and analyzed by BMACopilot</li>
-                </ol>
+                AI powered bone marrow aspirate differentials
             </p>
         </header>
 
-        <div id="statusPanel" class="status-panel">
-            <div class="status-container">
-                <div id="recordingIndicator" class="recording-indicator"></div>
-                <div id="status" class="status-message">Ready to share</div>
-            </div>
-            <div id="dimensions" class="dimensions-info">Resolution: Not sharing</div>
-        </div>
+        <div id="mainContent" class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
 
-        <div id="controlPanel" class="control-panel">
-            <button id="shareButton" class="btn btn-primary">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M16 8v-4l8 8-8 8v-4h-8v-8h8zm-16-6v20h14v-2h-12v-16h12v-2h-14z"/>
-                </svg>
-                Start Screen Share
-            </button>
-            <button id="stopButton" class="btn btn-danger" style="display: none;">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M6 6h12v12h-12z"/>
-                </svg>
-                Stop Sharing
-            </button>
-            <button id="resetCrop" class="btn btn-secondary" style="display: none;">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M13 3h-2v10h2v-10zm4.83 2.17l-1.42 1.42c1.57 1.57 2.59 3.74 2.59 6.41 0 4.97-4.03 9-9 9s-9-4.03-9-9c0-2.67 1.02-4.84 2.59-6.41l-1.42-1.42c-1.89 1.89-3.17 4.47-3.17 7.83 0 6.08 4.92 11 11 11s11-4.92 11-11c0-3.36-1.28-5.94-3.17-7.83z"/>
-                </svg>
-                Reset Selection
-            </button>
+            <div class="card-cotainer">
 
-            <button id="recordButton" class="btn btn-primary" style="display: none;">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="8"/>
-                </svg>
-                Start Recording
-            </button>
+                <div class="row g-4 mb-5 d-flex" style="justify-content: space-around;">
 
-            <button id="confirmRecordButton" class="btn btn-primary" style="display: none;" disabled>
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M9 16.2l-5.5-5.5-1.5 1.5 7 7 12-12-1.5-1.5z"/>
-                </svg>
-                Confirm Recording
-            </button>
-        
-        </div>
-
-        <div class="content-container">
-            <div class="main-screen">
-                <div id="screenContainer" class="screen-container" style="display: none;">
-                    <video id="sharedScreen" autoplay playsinline></video>
-                    <div class="crop-overlay">
-                        <div class="crop-box"></div>
+                    {% comment %} CARD 1 {% endcomment %}
+                    <div class="col-md-3 d-flex">
+                        <div class="custom-card w-100">
+                            <i class="fas fa-microscope card-icon"></i>
+                            <div class="card-content">
+                                <h4>Live Microscope Sharing</h4>
+                                <p>Share your microscope camera in the app.</p>
+                            </div>
+                        </div>
                     </div>
+
+                    {% comment %} CARD 2 {% endcomment %}
+                    <div class="col-md-3 d-flex">
+                        <div class="custom-card w-100">
+                            <i class="fas fa-upload card-icon"></i>
+                            <div class="card-content">
+                                <h4>Upload for AI Processing</h4>
+                                <p>Submit selected recording for AI-powered cell detection and classification.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% comment %} CARD 3 {% endcomment %}
+                    <div class="col-md-3 d-flex">
+                        <div class="custom-card w-100">
+                            <i class="fas fa-check-circle card-icon"></i>
+                            <div class="card-content">
+                                <h4>Review & Refine</h4>
+                                <p>Analyze, update, and save the results.</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                <div id="processingContainer" style="display: none;">
-                    <i class="fa-solid fa-microscope fa-bounce fa-2xl" style="color: #ba75ff;"></i>
-                </div>
+
             </div>
 
-            <div id="previewPane" class="preview-pane" style="display: none;">
-                <div class="preview-header">
-                    <h3>Live Preview</h3>
-                    <span class="preview-subtitle">Real-time view of captured whole slide image regions</span>
-                    <span class='stop-record'>
-                        <button id="stopRecordingButton" class="btn btn-danger" style="display: none;">
-                            <svg class="icon" viewBox="0 0 24 24">
-                                <path d="M6 6h12v12h-12z"/>
-                            </svg>
-                            Stop Recording
-                        </button>
-                    </span>
-                </div>
-                <canvas id="previewCanvas"></canvas>
+            <div>
+                <a href="{% url 'microscope-viewer' %}" class="btn btn-tertiary">
+                    Try it yourself
+                    <i class="fa-solid fa-angle-right"></i>
+                </a>
             </div>
 
         </div>
+
     {% endblock content %}

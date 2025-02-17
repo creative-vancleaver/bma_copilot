@@ -2,8 +2,6 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Case {{ case.name }}{% endblock %}
-
 {% block head %}
 <style>
     .container {
@@ -15,7 +13,7 @@
     }
 
     .sidebar {
-        width: 250px;
+        width: 300px;
         background: #f0ebf8;
         padding: 20px;
         height: 100vh;
@@ -107,6 +105,10 @@
         gap: 10px;
         padding: 1rem;
     }
+
+    .cell-image {
+        border-radius: 8px;
+    }
     
     .cell-images img {
         width: 100%;
@@ -116,12 +118,13 @@
 
     .cell-name {
         flex-grow: 1;
+        text-align: left;
     }
 
     .percent {
         text-align: right;
-        min-width: 50px;
-        margin-left: auto;
+        {% comment %} min-width: 50px;
+        margin-left: 10px; {% endcomment %}
     }
     
     .percentage {
@@ -140,11 +143,40 @@
     .cell-link a {
         text-decoration: none;
         color: inherit;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
     }
 
     .cell-link:hover {
         transform: scale(1.05);
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.19);
+    }
+
+    .cell-name {
+        {% comment %} flex: 1;
+        text-align: left; {% endcomment %}
+        {% comment %} overflow: hidden;
+        text-overflow: ellipsis; {% endcomment %}
+    }
+
+    .count-percent {
+        {% comment %} display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-left: auto;
+        white-space: nowrap; {% endcomment %}
+        {% comment %} flex-shrink: 0; {% endcomment %}
+    }
+
+    .count {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .cell-link.skippocytes {
+        background-color: #f5f5f5;
     }
 
     {% comment %} .cell-anchor:target::before {
@@ -158,7 +190,34 @@
         height: 0;
         overflow: hidden;
     }
+
+    .export-buttons {
+        margin-top: 1rem;
+    }
+
+    .export-buttons .fas {
+        margin-right: 0.5rem;
+    }
 </style>
+<script type="module">
+    import { startTour } from "{% static 'core/js/Tour.js' %}";
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        if (!localStorage.getItem('tourCompleted')) {
+            startTour();
+        }
+
+        // Attach the tour to the Help button in the navbar
+        const helpButton = document.getElementById("help");
+        if (helpButton) {
+            helpButton.addEventListener("click", function () {
+                startTour();
+            });
+        }
+        
+    });
+</script>
 <script src="{% static 'core/js/Cell.js' %}"></script>
 <script src="{% static 'core/js/Case.js' %}"></script>
 {% endblock head %}
@@ -180,20 +239,49 @@
                 <h3>Differential Count</h3>
                 <h5>Cell Total: {{ cell_total }}</h5>
                 <ul>
-                    {% for cell_type, percentage in diff_counts.items %}
-                            <li class="cell-link">
-                                <a href="#{{ cell_type }}_anchor">
-                                    <span class="cell-name">{{ cell_type|replace:"_ "|title }} </span>
-                                    <span id="{{ cell_type }}_percent" class="percent">
-                                        {{ percentage }}%
+                    {% for class_name in cell_order %}
+                        {% if class_name != 'skippocytes' %}
+                            <li class="cell-link d-flex align-items-center">
+                                <a href="#{{ class_name }}_anchor">
+                                    {% if case.case_status != 'completed' and case.case_status != 'archived' %}
+                                        <span class="keybinding me-2">
+                                            <img src="{% static 'core/images/'|add:class_name|add:'.png' %}" alt=""  style='width: 15px;'>
+                                        </span>
+                                    {% endif %}
+                                    <span class="cell-name">{{ class_name|abbreviate_cell_type }}</span>
+                                    <span class="count-percent">
+                                        <span id="{{ class_name }}_count" class="count">
+                                            ({{ diff_counts.counts|get_item:class_name }})
+                                        </span>
+                                        <span id="{{ class_name }}_percent" class="percent">
+                                            {{ diff_counts.percentages|get_item:class_name }}
+                                            <sup style="margin-left: -5px;">%</sup>
+                                        </span>
                                     </span>
                                 </a>
                             </li>
+                        {% endif %}
                     {% endfor %}
+
+                    {% comment %} {% for cell_type, percentage in diff_counts.items %}
+                        <li class="cell-link">
+                            <a href="#{{ cell_type }}_anchor">
+                                <span class="cell-name">{{ cell_type|replace:"_ "|title }}</span>
+                                <span id="{{ cell_type }}_percent" class="percent">
+                                    {{ percentage }}%
+                                </span>
+                            </a>
+                        </li>
+                    {% endfor %} {% endcomment %}
 
                     <li class="mt-3 cell-link">
                         <a href="#skippocytes">
-                        Skippocytes 
+                            {% if case.case_status != 'completed' and case.case_status != 'archived' %}
+                                <span class="keybinding me-2">
+                                    <img src="{% static 'core/images/skippocytes.png' %}" alt=""  style='width: 15px;'>
+                                </span>
+                            {% endif %}
+                            <span class="cell-name">Skippocytes</span>
                             <span id="{{ skippocytes }}_percent" class="percent">
                                 {{ skippocytes_counts }}
                             </span>
@@ -201,6 +289,18 @@
                     </li>
 
                 </ul>
+
+                <div class="export-buttons mt-3">
+                    <button id="copyDiff" class="btn btn-tertiary btn-sm w-100 mb-2">
+                        <i class="fas fa-clipboard"></i>
+                        Copy to Clipboard
+                    </button>
+                    <button id="saveReport" class="btn btn-tertiary btn-sm w-100">
+                        <i class="fas fa-download"></i>
+                        Save Report
+                    </button>
+                </div>
+
             </div>
 
             <div class="sidebar-section">
@@ -211,7 +311,7 @@
                     </button>
                 {% else %}
                     <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed">
-                        Sign Out
+                        Close Case
                     </button>
                 {% endif %}
             </div>
@@ -219,12 +319,12 @@
 
         <div class="content">
             <div class="classification-header">
-                <h2 class='classification-title'>
+                <h2 id="cellTitle" class='classification-title'>
                     Cell Classifications
                     {% if case.case_status == 'completed' %}
-                        <span class='case-status'>Completed</span>
+                        <span id="caseStatus" class='case-status'>Completed</span>
                     {% elif case.case_status == 'archived' %}
-                        <span class='case-status'>Archived</span>
+                        <span id="caseStatus" class='case-status'>Archived</span>
                     {% endif %}
                 </h2>
             </div>
@@ -239,7 +339,13 @@
                                 {% with cell_groups|get_item:class_name as cells %}        
                                     {% for cell in cells %}
                                         {% if cell.image_url %}
-                                            <div class="cell-image" data-class="{{ class_name }}" data-id="{{ cell.cell_id }}">
+                                            <div 
+                                                class="cell-image"
+                                                data-ai-class="{{ cell.ai_class }}"
+                                                data-user-class="{{ cell.user_class }}"
+                                                data-class="{{ class_name }}" 
+                                                data-id="{{ cell.cell_id }}"
+                                            >
                                                 <img src="{{ cell.image_url }}" alt="{{ class_name }}">
                                             </div>
                                         {% else %}
@@ -263,7 +369,15 @@
                 $('.cell-image').each(function() {
                     Cell.cellItemClickHandler(this);
                 });
+
+                $(document).on('click', function(event) {
+                    if (!$(event.target).closest('.cell-image').length) {
+                        $('.cell-image').removeClass('clicked').off('keyup');
+                    }
+                });
             {% endif %}
+
+
 
             $('#closeCase').on('click', function() {
                 $(this).prop('disabled', true).text('Updating...')
@@ -272,7 +386,87 @@
                 Case.updateCaseStatus(case_id, status);
             });
             
+            // Add smooth scrolling for anchor links
+            $('.sidebar a[href^="#"]').on('click', function(e) {
+                e.preventDefault();
+                
+                // Get the target element ID without the #
+                const targetId = this.getAttribute('href').slice(1);
+                const target = document.getElementById(targetId);
+                
+                if (target) {
+                    const navbarHeight = $('#navBar').outerHeight();
+                    const offset = target.offsetTop - navbarHeight - 20; // 20px extra padding
+                    
+                    $('html, body').animate({
+                        scrollTop: offset
+                    }, 500);
+                }
+            });
+
+            $('#copyDiff').on('click', function() {
+                let diffText = 'Differential Count Report\n';
+                diffText += '=========================\n';
+                diffText += `Total Cells: ${$('h5').text().split(': ')[1]}\n\n`;
+
+                // GET ALL CELL TYPES + THEIR PRECENTAGES
+                $('.cell-link').each(function() {
+                    const cellName = $(this).find('.cell-name').text().trim();
+                    const count = $(this).find('.count').text().trim();
+                    const percent = $(this).find('.percent').text().trim();
+                    diffText += `${ cellName }: ${ count } ${ percent }\n`;
+                });
+
+                // COPY TO CLIPBOARD 
+                navigator.clipboard.writeText(diffText).then(() => {
+                    alert('Differntial copied to clipboard.');
+                }).catch(error => {
+                    console.error('Failed to copy text: ', e);
+                });
+            });
+
+            $('#saveReport').on('click', function() {
+                // CREATE FULL REPORT CONTENT 
+                let reportContent = document.documentElement.cloneNode(true);
+
+                // ADD TIMESTAMP TO REPORT
+                const timestamp = new Date().toLocaleString();
+                const timeHeader = document.createElement('div');
+                timeHeader.innerHTML = `<h4>Report Generated: ${ timestamp }</h4>`;
+                reportContent.querySelector('.sidebar-header').prepend(timeHeader);
+
+                // CONVERT TO STRING 
+                const htmlContent = reportContent.outerHTML;
+                
+                // CREATE BLOB + DOWNLOAD
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `case-${$('#case-id').text()}-report-${ new Date().toISOString().split('T')[0]}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            });
+
+
         });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".cell-image img").forEach((img) => {
+                img.onload = function () {
+                    let parentDiv = img.closest(".cell-image");
+                    let aiClass = parentDiv.dataset.aiClass;
+                    let userClass = parentDiv.dataset.userClass;
+        
+                    if (aiClass !== userClass) {
+                        parentDiv.classList.add("changed");
+                    }
+                };
+            });
+        });
+
     </script>
 
 {% endblock content %}

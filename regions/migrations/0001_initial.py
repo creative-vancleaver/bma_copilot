@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Region',
             fields=[
-                ('region_id', models.CharField(default=users.models.CustomIDMixin.generate_custom_id, max_length=255, primary_key=True, serialize=False, unique=True)),
+                ('region_id', models.CharField(default=None, max_length=255, primary_key=True, serialize=False, unique=True)),
                 ('time_stamp', models.DateTimeField(blank=True, null=True)),
                 ('TL_x_in_frame', models.FloatField(blank=True, null=True)),
                 ('TL_y_in_frame', models.FloatField(blank=True, null=True)),

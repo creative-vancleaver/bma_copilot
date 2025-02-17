@@ -1,10 +1,7 @@
 import os
 import base64
+import json
 import pytz
-import time
-
-import random
-import copy
 from collections import defaultdict
 from datetime import datetime
 from decouple import config
@@ -12,67 +9,24 @@ from decouple import config
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from django.shortcuts import render
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.authentication import JWTAuthentication
-
 from .models import Case, Video
-from .serializers import CaseSerializer
 from .utils import upload_to_azure_blob
-from cells.services.azure_service import CaseAzureService
+from .services.video_service import create_video_status, get_video_status, complete_video_status
 
 USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='False').lower() == 'true'
 USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False').lower() == 'true'
 
-class CaseViewSet(viewsets.ModelViewSet):
-
-    # TEMP DISABLE AUTH FOR THIS VIEW
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    # permission_classes = [IsAuthenticated]
-    
-    queryset = Case.objects.all().order_by('case_id')
-    serializer_class = CaseSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        print("USE_AZURE_STORAGE:", config('USE_AZURE_STORAGE', default='Not Found'))
-        print("AZURE_STORAGE_CONNECTION_STRING:", config('AZURE_STORAGE_CONNECTION_STRING', default='Not Found'))
-        print("AZURE_STORAGE_CONTAINER:", config('AZURE_STORAGE_CONTAINER', default='Not Found'))
-                
-        # Only sync with Azure if enabled
-        if USE_AZURE_SERVICES:
-            azure_service = CaseAzureService()
-            for case in queryset:
-                azure_service.sync_case(str(case.id))
-            
-        return queryset
-
-    def perform_create(self, serializer):
-        case = serializer.save()
-        
-        # Only sync with Azure if enabled
-        if USE_AZURE_SERVICES:
-            azure_service = CaseAzureService()
-            azure_service.azure_db.create_case(
-                case_id=str(case.id),
-                case_name=case.name,
-                case_description=case.description,
-                case_date=case.date.strftime('%Y-%m-%d'),
-                case_time=case.time.strftime('%H:%M:%S'),
-                user_id=str(case.user.id)
-            )
-
 os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=True)
 
-@csrf_exempt # EXEMPT IN DEV ONLY
-def save_recording(request, case_id):
+@login_required
+def save_recording(request):
 
     if request.method != 'POST':
         return JsonResponse({
@@ -88,15 +42,22 @@ def save_recording(request, case_id):
             }, status=400)
         
         video_file = request.FILES["video"]
+        crop_data = json.loads(request.POST.get('crop_data'))
 
         # FOR NOW EACH VIDEO WILL BE A NEW CASE
         # case = Case.objects.get(case_id=case_id)
         case = Case.objects.create(user=request.user)
         case_id = case.case_id
-        
 
+        new_video = Video.objects.create(
+            case=case, 
+            TL_x=crop_data.get('TL_x'), 
+            TL_y=crop_data.get('TL_y'),
+            BR_x=crop_data.get('BR_x'),
+            BR_y=crop_data.get('BR_y'),    
+        )
         
-        # Generate filename and path
+        # GENERATE FILENAME + PATH
         # EACH CASE HAS 1 VIDEO - THEREFORE VIDEO_ID = 1.
         filename = f"{case_id}_1.webm"
         file_path = f"cases/{case_id}/recordings/{filename}"
@@ -104,12 +65,9 @@ def save_recording(request, case_id):
         print(filename)
 
         try:
-            # if USE_AZURE_STORAGE:
-            print('upload to blob')
+            if USE_AZURE_STORAGE:
             # UPLOAD TO AZURE STORAGE BLOB
-            blob_url = upload_to_azure_blob(video_file, filename)
-            # new_video.azure_url = blob_url
-            # new_video.video_file_path = file_path
+                blob_url = upload_to_azure_blob(video_file, filename)
                 
             # else:
             #     # Save locally
@@ -124,13 +82,14 @@ def save_recording(request, case_id):
             return JsonResponse({
                 "success": True,
                 "case": case.case_id,
+                "video_id": new_video.video_id,
                 "filename": filename,
             })
             
-        except Exception as storage_error:
-            # If storage fails, delete the video object
+        except Exception as blob_error:
+            # IF UPLOAD FAILS - DELETE VIDEO OBJECT
             # new_video.delete()
-            raise storage_error
+            raise blob_error
             
     except Exception as e:
         import traceback
@@ -140,6 +99,43 @@ def save_recording(request, case_id):
             "success": False,
             "error": str(e)
         }, status=500)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class VideoStatusView(View):
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            video_id = data.get('video_id')
+            if not video_id:
+                return JsonResponse({ 'error': 'Missing video_id' }, status=400)
+            
+            response = create_video_status(video_id)
+            return JsonResponse(response)
+        
+        except json.JSONDecodeError:
+            return JsonResponse({ 'error': 'Invalid JSON' }, status=400)
+        
+    def get(self, request, video_id=None):
+
+        if not video_id:
+            return JsonResponse({ 'error': 'Missing video_id' }, status=400)
+        
+        response = get_video_status(video_id)
+        return JsonResponse(response)
+    
+    def put(self, request):
+        try:
+            data = json.loads(request.body)
+            video_id = data.get('video_id')
+            if not video_id:
+                return JsonResponse({ 'error': 'Missing video_id' }, status=400)
+            
+            response = complete_video_status(video_id)
+            return JsonResponse(response)
+
+        except json.JSONDecodeError:
+            return JsonResponse({ 'error': 'Invalid JSON' }, 400)
 
 @login_required
 def update_case_status(request, case_id):

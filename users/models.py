@@ -79,13 +79,18 @@ class User(AbstractUser):
 
     objects = CustomUserManager()
 
+    def save(self, *args, **kwargs):
+        if not self.user_id:
+            self.user_id = self.objects.generate_user_id()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.email} (ID: {self.user_id})"
 
     class Meta:
         app_label = 'users'
         db_table = 'users'  # Match Azure table name
-        # # managd = False
+        # # managed = False
 
 
 
@@ -100,26 +105,26 @@ class CustomIDMixin(models.Model):
         """
         Generates a hierarchical custom ID while ensuring numeric sorting.
         """
+        if cls:
+            primary_key_field = cls._meta.pk.name
+            
+            def extract_last_number(value):
+                numbers = re.findall(r'\d+', value)
+                return int(numbers[-1]) if numbers else 0
 
-        primary_key_field = cls._meta.pk.name
+            key_components = [str(value) for key, value in kwargs.items() if value is not None]
+
+            existing_ids = cls.objects.filter(**kwargs).values_list(primary_key_field, flat=True)
+
+            last_numeric_id = max([extract_last_number(id_str) for id_str in existing_ids], default=0)
+
+            next_id = str(last_numeric_id + 1)
+
+            new_id = "_".join(key_components + [next_id])
+
+            print(f"[DEBUG] Generated ID: {new_id}")  # Debugging print statement
+
+            return new_id
         
-        def extract_last_number(value):
-            numbers = re.findall(r'\d+', value)
-            return int(numbers[-1]) if numbers else 0
-
-        key_components = [str(value) for key, value in kwargs.items() if value is not None]
-
-        existing_ids = cls.objects.filter(**kwargs).values_list(primary_key_field, flat=True)
-
-        last_numeric_id = max([extract_last_number(id_str) for id_str in existing_ids], default=0)
-
-        next_id = str(last_numeric_id + 1)
-
-        new_id = "_".join(key_components + [next_id])
-
-        print(f"[DEBUG] Generated ID: {new_id}")  # Debugging print statement
-
-        return new_id
-
     class Meta:
         abstract = True
