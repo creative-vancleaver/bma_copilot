@@ -19,7 +19,6 @@ def index(request):
 
 @login_required
 def microscope_viewer(request):
-    # print('case ID === ', case_id)
 
     return render(request, 'cases/microscope_viewer.html')
 
@@ -68,14 +67,11 @@ def case(request, case_id):
 
     for cls in classifications:
 
-        # user_class = cls.pop("user_class", None)
-        # ai_class = cls.pop("ai_class", None)
         user_class = cls['user_class']
         ai_class = cls['ai_class']
         class_label = user_class if user_class else ai_class
 
         if USE_AZURE_STORAGE:
-            # print('use blob')
             image_path = cls.pop('cell_image_path')
             if image_path:
                 print('image_path ', image_path)
@@ -83,7 +79,6 @@ def case(request, case_id):
                 try:
                     response = get_blob_url("cells", filename)
                     cls["image_url"] = response
-                    # print('cell_image_path == ', response)
                 except Exception as e:
                     print(f'Error getting blob URL for { filename }: { str(e)}')
                     cls["image_url"] = None
@@ -92,13 +87,9 @@ def case(request, case_id):
         else:
             cls["image_url"] = f"/media/{cls.pop('cell_image_path')}" if cls.get('cell_image_path') else None
 
-        # cls["image_url"] = f"/media/{cls.pop('image')}" if cls.get("image") else None
         classification_groups[class_label].append(cls)
 
     classification_groups = dict(classification_groups)
-    print("Classification groups count:", len(classification_groups))
-    for key, value in classification_groups.items():
-        print(f"Group: {key}, Number of Cells: {len(value)}")
 
     new_cell_total = sum(len(value) for key, value in classification_groups.items() if key != 'skippocytes')
     skippocytes_counts = len(classification_groups.get("skippocytes", []))
@@ -111,7 +102,6 @@ def case(request, case_id):
         'diff_counts': diff_counts,
         'cell_groups': classification_groups,
         'cell_order': CELL_ORDER,
-        # 'cell_total': cell_total
         'cell_total': new_cell_total,
         'skippocytes_counts': skippocytes_counts,
     }

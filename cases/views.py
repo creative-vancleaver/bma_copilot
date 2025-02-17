@@ -25,7 +25,7 @@ USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False').lower() == 't
 
 os.makedirs(os.path.join(settings.MEDIA_ROOT, "cases/screenshots"), exist_ok=True)
 
-@login_required # EXEMPT IN DEV ONLY
+@login_required
 def save_recording(request):
 
     if request.method != 'POST':
@@ -42,8 +42,6 @@ def save_recording(request):
             }, status=400)
         
         video_file = request.FILES["video"]
-        print('crop_data = ', request.POST.get('crop_data'))
-        # crop_data =  {"TL_x":112,"TL_y":184,"BR_x":998,"BR_y":910}
         crop_data = json.loads(request.POST.get('crop_data'))
 
         # FOR NOW EACH VIDEO WILL BE A NEW CASE
@@ -58,10 +56,8 @@ def save_recording(request):
             BR_x=crop_data.get('BR_x'),
             BR_y=crop_data.get('BR_y'),    
         )
-        print('new_video ========= ', new_video)        
-
         
-        # Generate filename and path
+        # GENERATE FILENAME + PATH
         # EACH CASE HAS 1 VIDEO - THEREFORE VIDEO_ID = 1.
         filename = f"{case_id}_1.webm"
         file_path = f"cases/{case_id}/recordings/{filename}"
@@ -69,12 +65,9 @@ def save_recording(request):
         print(filename)
 
         try:
-            # if USE_AZURE_STORAGE:
-            print('upload to blob')
+            if USE_AZURE_STORAGE:
             # UPLOAD TO AZURE STORAGE BLOB
-            # blob_url = upload_to_azure_blob(video_file, filename)
-            # new_video.azure_url = blob_url
-            # new_video.video_file_path = file_path
+                blob_url = upload_to_azure_blob(video_file, filename)
                 
             # else:
             #     # Save locally
@@ -93,10 +86,10 @@ def save_recording(request):
                 "filename": filename,
             })
             
-        except Exception as storage_error:
-            # If storage fails, delete the video object
+        except Exception as blob_error:
+            # IF UPLOAD FAILS - DELETE VIDEO OBJECT
             # new_video.delete()
-            raise storage_error
+            raise blob_error
             
     except Exception as e:
         import traceback

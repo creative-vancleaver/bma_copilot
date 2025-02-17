@@ -9,12 +9,7 @@ from cases.models import Case, Video
 from users.models import CustomIDMixin
 
 def region_image_path(instance, filename):
-    # region_folder = sanitize_name(instance.name)
-    # return os.path.join(region_folder)
-    # pst = pytz.timezone('America/Los_Angeles')
-    # current_time = datetime.now(pst)
-    # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
-    # filename = f"region_{ instance.region.id }.jpg"
+
     user_id = instance.region.case.user.user_id
     case_id = instance.region.case.case_id
     region_id = instance.region.region_id
@@ -47,7 +42,7 @@ class Region(CustomIDMixin, models.Model):
         super().save(*args, **kwargs)
     
     class Meta:
-        # managd = False
+        # managed = False
         db_table = 'region'  # Match Azure table name (note: singular as per your schema)
         indexes = [
             models.Index(fields=['case']),
@@ -63,7 +58,7 @@ class RegionImage(models.Model):
         return self.region_image_path
     
     class Meta:
-        # managd = False
+        # managed = False
         db_table = 'region_image_selected'  # Match Azure table name
     
 class RegionClassification(models.Model):
@@ -80,6 +75,6 @@ class RegionClassification(models.Model):
         return self.region_id.region_id
         
     class Meta:
-        # managd = False
+        # managed = False
         db_table = 'region_classification'  # Match Azure table name
     

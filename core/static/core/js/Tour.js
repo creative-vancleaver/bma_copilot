@@ -66,23 +66,6 @@ export function startTour() {
         }]
     });
 
-    // if (!localStorage.getItem('tourCompleted')) {
-    //     tour.start();
-    // }
     tour.start();
 
-    // return tour;
 }
-
-// // Attach the tour to the Help button in the navbar
-// document.addEventListener("DOMContentLoaded", function () {
-//     const helpButton = document.getElementById("help");
-//     // if (window.location.pathname.includes('case')) {
-//     //     startTour();
-//     // } else 
-//     if (helpButton) {
-//         helpButton.addEventListener("click", function () {
-//             startTour();
-//         });
-//     }
-// });

@@ -97,10 +97,7 @@ class Cell {
         console.log('label ', label)
 
         let case_id = window.location.pathname.split('/')[2]
-        console.log(case_id);
-        // case_id = '1';
 
-		//Update record in database
 		fetch(`/api/cells/cell/${ case_id }/`, {
             method: 'POST',
             headers: {
@@ -115,19 +112,10 @@ class Cell {
         })
         .then(response => response.json())
         .then(data => {
-            console.log('data ', data);
             if (data.success) {
                 Cell.updateCellDisplay(label);
 
-                // data.cell_counts.forEach(item => {
-                    // UPDATE CELL COUNT DISPLAY?
-                // });
-
-                // for (const [cellType, percentage] of Object.entries(data.diff_counts)) {
-                //     let diffElement = document.querySelector(`#${ cellType }_percent`);
-                //     diffElement.innerHTML = `${ percentage }%`
-                // }
-
+                // UPDATE CELL PERCENT DISPLAY
                 for (const[cellType, percentage] of Object.entries(data.diff_counts.percentages)) {
                     let diffElement = document.querySelector(`#${ cellType }_percent`);
                     if (diffElement) {
@@ -135,6 +123,7 @@ class Cell {
                     }
                 }
 
+                // UPDATE CELL COUNT DISPLAY
                 for (const [cellType, count] of Object.entries(data.diff_counts.counts)) {
                     let countElement = document.querySelector(`#${ cellType }_count`);
                     if (countElement) {
@@ -154,7 +143,6 @@ class Cell {
 		if (old_label != new_label) {
 
             let old_section = document.querySelector(`#${ old_label }`);
-
             old_cell.remove();
 
             if (old_section && old_section.querySelector('.cell-images') && old_section.querySelector('.cell-images').children.length === 0) {
@@ -162,8 +150,6 @@ class Cell {
             }
 
             let targetSection = document.querySelector(`#${ new_label }`);
-            console.log('targetSection ', targetSection);
-
             if (!targetSection) {
                 targetSection = Cell.insertCellSection(new_label);
             }

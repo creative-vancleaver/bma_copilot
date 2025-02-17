@@ -9,11 +9,6 @@ from users.models import CustomIDMixin
 
 def cell_image_path(instance, filename):
 
-    # pst = pytz.timezone('America/Los_Angeles')
-    # current_time = datetime.now(pst)
-    # timestamp = current_time.strftime("%Y%m%d-%H%M%S")
-    # filename = f"cell_{ instance.id }.jpg"
-
     user_id = instance.region.video_id.case.user.user_id
     case_id = instance.region.case.id
     region_id = instance.region.id
@@ -55,7 +50,7 @@ class Cell(CustomIDMixin, models.Model):
         super().save(*args, **kwargs)
 
     class Meta:
-        # managd = False
+        # managed = False
         db_table = 'cells'
         indexes = [
             models.Index(fields=['region'])
@@ -72,11 +67,11 @@ class CellDetection(models.Model):
         return self.cell.cell_id
     
     class Meta:
-        # managd = False
+        # managed = False
         db_table = 'cell_detection'  # Match Azure table name
     
 class CellClassification(models.Model):
-    cell = models.OneToOneField(Cell, db_column='cell_id', to_field='cell_id', primary_key=True, on_delete=models.CASCADE)    # Make all fields nullable except primary relationships
+    cell = models.OneToOneField(Cell, db_column='cell_id', to_field='cell_id', primary_key=True, on_delete=models.CASCADE)
 
     ai_cell_class = models.CharField(max_length=250, blank=True, null=True)
     user_cell_class = models.CharField(max_length=250, blank=True, null=True)
@@ -95,16 +90,11 @@ class CellClassification(models.Model):
 
     cell_classification_model_id = models.CharField(max_length=255, blank=True, null=True)  # Make nullable
 
-    # neutrophil_score = models.FloatField(blank=True, null=True)
-    # basophil_score = models.FloatField(blank=True, null=True)
-    # blast_score = models.FloatField(blank=True, null=True)
-
-
     def __str__(self):
         return self.cell.cell_id
 
     class Meta:
-        # managd = False
+        # managed = False
         db_table = 'cell_classification'  # Match Azure table name
         indexes = [
             models.Index(fields=['cell']),

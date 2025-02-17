@@ -10,13 +10,6 @@
             <h1>BMACopilot</h1>
             <p class="app-description">
                 AI powered bone marrow aspirate differentials
-                {% comment %} <ol class="instructions">
-                    <li>Click "Start Screen Share" and select the microscope mounted camera output window.</li>
-                    <li>Once sharing begins, select 'Start Recording'.</li>
-                    <li>Click and drag on the screen to select the specific region containing your microscope view anc click 'Confirm Recording</li>
-                    <li>A live preview of your selected region will appear in the right panel. Use "Reset Selection" to adjust if needed, or "Stop Sharing" when done</li>
-                    <li>Proceed with your normal BMA interpretation workflow! The selected region will be automatically monitored and analyzed by BMACopilot</li>
-                </ol> {% endcomment %}
             </p>
         </header>
 
@@ -64,7 +57,7 @@
             </div>
 
             <div>
-                <a href="{% url 'microscope-viewer' %}" class="btn btn-secondary">
+                <a href="{% url 'microscope-viewer' %}" class="btn btn-tertiary">
                     Try it yourself
                     <i class="fa-solid fa-angle-right"></i>
                 </a>

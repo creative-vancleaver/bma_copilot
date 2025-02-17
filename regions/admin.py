@@ -5,7 +5,7 @@ from .models import Region, RegionImage, RegionClassification
 @admin.register(Region)
 class RegionAdmin(admin.ModelAdmin):
 
-    list_display = ('region_id', 'get_video_id')
+    list_display = ('region_id', 'get_video_id', 'date_added')
     search_fields = ('region_id', 'video_id__video_id')
 
     def get_video_id(self, obj):

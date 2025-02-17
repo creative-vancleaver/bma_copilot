@@ -90,7 +90,7 @@ class User(AbstractUser):
     class Meta:
         app_label = 'users'
         db_table = 'users'  # Match Azure table name
-        # # managd = False
+        # # managed = False
 
 
 
@@ -105,7 +105,6 @@ class CustomIDMixin(models.Model):
         """
         Generates a hierarchical custom ID while ensuring numeric sorting.
         """
-        print('cls ============ ', cls)
         if cls:
             primary_key_field = cls._meta.pk.name
             

@@ -67,7 +67,6 @@ class CellView(View):
             return {
                 'percentages': { class_name: 0.0 for class_name in CELL_ORDER if class_name != 'skippocytes' },
                 'counts': {item['class_name']: item['cell_count'] for item in cell_counts }
-                # class_name: 0.0 for class_name in CELL_ORDER if class_name != "skippocytes"
             }
         
         diff = {
@@ -78,10 +77,7 @@ class CellView(View):
             'counts': {
                 item['class_name']: item['cell_count'] for item in cell_counts
             }
-            # item['class_name']: round((item['cell_count'] / total_cells) * 100, 1)
-            # for item in filtered_counts
         }
-        print(diff)
         
         return diff
     
@@ -111,7 +107,6 @@ class CellView(View):
             
             cell_id = data.get('cell_id')
             new_label = data.get('cell_label')
-            print('cell + label ', cell_id, ' + ', new_label)
 
             if not cell_id or not new_label:
                 return JsonResponse({ 
@@ -129,9 +124,6 @@ class CellView(View):
             if not created:
                 cell_class.user_cell_class = new_label
                 cell_class.save()
-
-            print('new cell class cell ID: ', cell_class.cell.cell_id)
-            print('new cell class ', cell_class)
 
             updated_cell_counts = self.get_cell_counts(case_id)
             updated_diff_counts = self.get_diff_counts(case_id)
