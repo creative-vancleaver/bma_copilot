@@ -21,7 +21,7 @@
             "cell_image_path": "cells/1_1_42_187_10.jpg",
             "classification": {
                 "ai_cell_class": "erythroid_precursors",
-                "user_cell_class": "erythroid_precursors"
+                "user_cell_class": "plasma_cells"
             }
         },
         {
@@ -29,7 +29,7 @@
             "cell_image_path": "cells/1_1_42_187_11.jpg",
             "classification": {
                 "ai_cell_class": "erythroid_precursors",
-                "user_cell_class": "erythroid_precursors"
+                "user_cell_class": "plasma_cells"
             }
         },
         {
