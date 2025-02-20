@@ -96,9 +96,10 @@ class Cell {
     static labelCurrentCell(label, cell_id) {
         console.log('label ', label)
 
+        const CELL_URL = `/api/cells/json_cell/${ case_id }/`;
         let case_id = window.location.pathname.split('/')[2]
 
-		fetch(`/api/cells/cell/${ case_id }/`, {
+		fetch(CELL_URL, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': Cell.getCookie('csrftoken'),

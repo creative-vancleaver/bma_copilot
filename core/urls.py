@@ -16,6 +16,7 @@ urlpatterns = [
     # path('case/<int:case_id>/microscope-viewer/', views.microscope_viewer, name='microscope-viewer'),
     path('microscope-viewer/', views.microscope_viewer, name='microscope-viewer'),
     path('case/<str:case_id>/', views.case, name="case"),
+    path('json_case/<str:case_id>/', views.JSON_case, name='json_case'),
 
     path('preview_popup/', views.preview_popup, name='preview_popup'),
 

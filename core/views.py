@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
@@ -21,6 +23,57 @@ def index(request):
 def microscope_viewer(request):
 
     return render(request, 'cases/microscope_viewer.html')
+
+@login_required
+def JSON_case(request, case_id):
+
+    case = Case.objects.get(case_id=case_id)
+    data_dir = Path('data/cells')
+    try:
+        with open(data_dir / f'{ case_id }.json', 'r') as f:
+            cell_data = json.load(f)
+    except FileNotFoundError:
+        cell_data = {'cells': []}
+
+    cell_total = len(cell_data['cells'])
+    print(f'Total cells in JSON: { cell_total }')
+
+    classification_groups = defaultdict(list)
+
+    for cell in cell_data['cells']:
+        print(f'cell { cell }')
+        user_class = cell['classification']['user_cell_class']
+        ai_class = cell['classification']['ai_cell_class']
+        class_label = user_class if user_class else ai_class
+
+        image_path = cell['cell_image_path']
+        print(f'image path { image_path }')
+        if image_path:
+            filename = image_path.split('/')[-1]
+            try:
+                blob_url = get_blob_url('cells', filename)
+                cell['image_url'] = blob_url
+            except Exception as e:
+                print(f'Error getting blob URL for { filename }: { str(e) }')
+                cell['image_url'] = None
+
+    skippocytes_counts = len(classification_groups.get('skippocytes', []))
+    new_cell_total = cell_total - skippocytes_counts
+
+    CellView = CellView()
+    diff_counts = CellView.get_diff_counts()
+
+    context = {
+        'case': case,
+        'cell_groups': classification_groups,
+        'cell_order': CELL_ORDER,
+        'diff_counts': diff_counts,
+        'cell_total': new_cell_total,
+        'skippocytes_counts': skippocytes_counts
+    }
+
+    return render(request, 'cases/case.html', context)
+
 
 @login_required
 def case(request, case_id):

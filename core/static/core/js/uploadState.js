@@ -90,6 +90,7 @@ export function checkVideoStatus(videoId) {
     const processingContainer = document.getElementById('processingContainer');
     const MAX_CHECK_TIME = 6000000 // 10 MINUTES
     const CHECK_INTERVAL = 3000; // 3 SECONDS
+    const MESSAGE_INTERVAL = 180000 // 3 MINUTES
     let elapsedTime = 0;
 
     const extractCaseId = (str) => {
@@ -98,6 +99,34 @@ export function checkVideoStatus(videoId) {
     }
 
     const caseId = extractCaseId(videoId);
+
+    const progressMessages = [
+        {
+            time: 0,
+            message: 'Initializing video analysis...',
+            progress: 15
+        },
+        {
+            time: 180000,
+            message: 'Processing microscope feed...',
+            progress: 35
+        },
+        {
+            time: 360000,
+            message: 'Detecting cell boundaries...',
+            progress: 55
+        },
+        {
+            time: 540000,
+            message: 'Analyzing cell morphology...',
+            progress: 75
+        },
+        {
+            time: 720000,
+            message: 'Finalizing results...',
+            progress: 90
+        }
+    ];
 
     async function fetchStatus() {
         try {
@@ -114,6 +143,14 @@ export function checkVideoStatus(videoId) {
                 return;
             }
 
+            // UPDATE SIMULATED PROGRESS MESSAGE BASED ON ELAPSED TIME
+            const currentMessage = progressMessages.reduce((acc, msg) => {
+                if (elapsedTime >= msg.time) {
+                    return msg;
+                }
+                return acc;
+            }, progressMessages[0]);
+
             const getResponse = await fetch(`/api/cases/video-status/${ videoId }`);
             const getResponseData = await getResponse.json();
 
@@ -124,10 +161,17 @@ export function checkVideoStatus(videoId) {
             if (getResponse.ok) {
                 processingState.caseId = caseId;
                 processingState.status = data.status;
-                processingState.message = data.message || 'Processing...';
-                processingState.progress = data.progress || 25;
-                console.log('Updated Processing State:', processingState);
 
+
+                // OVERRIDE WITH SIMULATED MESSAGES
+                if (data.staus === 'pending') {
+                    processingState.message = currentMessage.message;
+                    processingState.progress = currentMessage.progress;
+                } else {
+                    processingState.message = data.message || 'Processing...';
+                    processingState.progress = data.progress || 25;
+                }
+                console.log('Updated Processing State:', processingState);
 
                 if (data.status === 'completed') {
                     processingState.status = 'completed';
