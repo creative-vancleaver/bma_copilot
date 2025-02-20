@@ -5,7 +5,7 @@
             "cell_image_path": "cells/1_1_42_187_0.jpg",
             "classification": {
                 "ai_cell_class": "erythroid_precursors",
-                "user_cell_class": "erythroid_precursors"
+                "user_cell_class": "promyelocytes"
             }
         },
         {
@@ -2117,7 +2117,7 @@
             "cell_image_path": "cells/1_1_42_481_4.jpg",
             "classification": {
                 "ai_cell_class": "blasts_and_blast_equivalents",
-                "user_cell_class": "blasts_and_blast_equivalents"
+                "user_cell_class": "promyelocytes"
             }
         },
         {

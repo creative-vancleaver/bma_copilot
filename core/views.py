@@ -21,7 +21,6 @@ def index(request):
 
 @login_required
 def microscope_viewer(request):
-
     return render(request, 'cases/microscope_viewer.html')
 
 @login_required
@@ -103,25 +102,9 @@ def case(request, case_id):
         .annotate(
             ai_cell_class=F("cellclassification__ai_cell_class"),
             user_cell_class=F("cellclassification__user_cell_class"),
-            # image_url=F("image"),  # Ensure image URL is included
-            myelocyte_score=F("cellclassification__myelocytes_score"),
-            metamyelocyte_score=F("cellclassification__metamyelocytes_score"),
-            neutrophil_score=F("cellclassification__neutrophils_bands_score"),
-            monocyte_score=F("cellclassification__monocytes_score"),
-            eosinophil_score=F("cellclassification__eosinophils_score"),
-            erythroid_precursor_score=F("cellclassification__erythroid_precursors_score"),
-            lymphocyte_score=F("cellclassification__lymphocytes_score"),
-            plasma_cell_score=F("cellclassification__plasma_cells_score"),
-            blast_score=F("cellclassification__blasts_and_blast_equivalents_score"),
-            skippocyte_score=F("cellclassification__skippocyte_score"),
-            
         )
         .values(
             "cell_id", "cell_image_path", "ai_cell_class", "user_cell_class",
-            "myelocyte_score", "metamyelocyte_score", "neutrophil_score",
-            "monocyte_score", "eosinophil_score", "erythroid_precursor_score",
-            "lymphocyte_score", "plasma_cell_score", "blast_score",
-            "skippocyte_score", 
         )
         .order_by("user_cell_class", "ai_cell_class")
     )

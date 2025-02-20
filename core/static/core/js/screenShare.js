@@ -78,8 +78,10 @@ export class ScreenShare {
 
         dimensionsDiv.textContent = `Source: ${this.trueWidth}x${this.trueHeight} | Crop: ${trueBoxWidth}x${trueBoxHeight} | Scale: ${scale.toFixed(2)}x`;
 
-        previewCanvas.width = trueBoxWidth;
-        previewCanvas.height = trueBoxHeight;
+        // previewCanvas.width = trueBoxWidth;
+        // previewCanvas.height = trueBoxHeight;
+        previewCanvas.width = width;
+        previewCanvas.height = height;
     }
 
     enableDrawing() {

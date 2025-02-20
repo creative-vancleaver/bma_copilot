@@ -49,25 +49,26 @@ def save_recording(request):
         case = Case.objects.create(user=request.user)
         case_id = case.case_id
 
-        new_video = Video.objects.create(
-            case=case, 
-            TL_x=crop_data.get('TL_x'), 
-            TL_y=crop_data.get('TL_y'),
-            BR_x=crop_data.get('BR_x'),
-            BR_y=crop_data.get('BR_y'),    
-        )
+        video_id = f"{ case_id }_1"
+
+        # new_video = Video.objects.create(
+        #     case=case, 
+        #     TL_x=crop_data.get('TL_x'), 
+        #     TL_y=crop_data.get('TL_y'),
+        #     BR_x=crop_data.get('BR_x'),
+        #     BR_y=crop_data.get('BR_y'),    
+        # )
         
         # GENERATE FILENAME + PATH
         # EACH CASE HAS 1 VIDEO - THEREFORE VIDEO_ID = 1.
         filename = f"{case_id}_1.webm"
         file_path = f"cases/{case_id}/recordings/{filename}"
 
-        print(filename)
-
         try:
             if USE_AZURE_STORAGE:
             # UPLOAD TO AZURE STORAGE BLOB
-                blob_url = upload_to_azure_blob(video_file, filename)
+                # blob_url = upload_to_azure_blob(video_file, filename)
+                blob_url = file_path
                 
             # else:
             #     # Save locally
@@ -82,7 +83,8 @@ def save_recording(request):
             return JsonResponse({
                 "success": True,
                 "case": case.case_id,
-                "video_id": new_video.video_id,
+                # "video_id": new_video.video_id,
+                "video_id": video_id,
                 "filename": filename,
             })
             
@@ -104,13 +106,16 @@ def save_recording(request):
 class VideoStatusView(View):
 
     def post(self, request):
+        print(request)
         try:
             data = json.loads(request.body)
+            print('data ', data)
             video_id = data.get('video_id')
             if not video_id:
                 return JsonResponse({ 'error': 'Missing video_id' }, status=400)
             
             response = create_video_status(video_id)
+            print('response = ', response)
             return JsonResponse(response)
         
         except json.JSONDecodeError:

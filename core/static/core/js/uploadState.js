@@ -32,7 +32,7 @@ export function updateProgressBar() {
 
     } else if (processingState.status === 'pending') {
 
-        statusDiv.innerHTML = `Processing...`;
+        statusDiv.innerHTML = `${ processingState.message }`;
         recordingIndicator.classList.remove('uploading', 'success');
         recordingIndicator.classList.add('processing');
 
@@ -44,7 +44,8 @@ export function updateProgressBar() {
 
     } else if (processingState.status === 'completed') {
 
-        statusDiv.textContent = 'Analysis complete!';
+        // statusDiv.textContent = 'Analysis complete!';
+        statusDiv.textContent = `${ processingState.message }`;
         recordingIndicator.classList.remove('uploading', 'processing', 'pending');
         recordingIndicator.classList.add('success');
 
@@ -90,7 +91,7 @@ export function checkVideoStatus(videoId) {
     const processingContainer = document.getElementById('processingContainer');
     const MAX_CHECK_TIME = 6000000 // 10 MINUTES
     const CHECK_INTERVAL = 3000; // 3 SECONDS
-    const MESSAGE_INTERVAL = 180000 // 3 MINUTES
+    const MESSAGE_INTERVAL = 15000 // 15 SECONDS
     let elapsedTime = 0;
 
     const extractCaseId = (str) => {
@@ -102,27 +103,27 @@ export function checkVideoStatus(videoId) {
 
     const progressMessages = [
         {
-            time: 0,
+            time: MESSAGE_INTERVAL * 0,
             message: 'Initializing video analysis...',
             progress: 15
         },
         {
-            time: 180000,
+            time: MESSAGE_INTERVAL * 1,
             message: 'Processing microscope feed...',
             progress: 35
         },
         {
-            time: 360000,
+            time: MESSAGE_INTERVAL * 2,
             message: 'Detecting cell boundaries...',
             progress: 55
         },
         {
-            time: 540000,
+            time: MESSAGE_INTERVAL * 3,
             message: 'Analyzing cell morphology...',
             progress: 75
         },
         {
-            time: 720000,
+            time: MESSAGE_INTERVAL * 4,
             message: 'Finalizing results...',
             progress: 90
         }
@@ -164,7 +165,8 @@ export function checkVideoStatus(videoId) {
 
 
                 // OVERRIDE WITH SIMULATED MESSAGES
-                if (data.staus === 'pending') {
+                if (data.status === 'pending') {
+                    console.log('pending ', currentMessage.message);
                     processingState.message = currentMessage.message;
                     processingState.progress = currentMessage.progress;
                 } else {

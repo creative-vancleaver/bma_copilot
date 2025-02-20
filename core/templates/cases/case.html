@@ -60,6 +60,12 @@
         display: flex;
         justify-content: space-between;
     }
+
+    .keybinding img {
+        width: 18px !important;
+        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+        border-radius: 50%;
+    }
     
     .content {
         flex: 1;
@@ -278,7 +284,7 @@
                         <a href="#skippocytes">
                             {% if case.case_status != 'completed' and case.case_status != 'archived' %}
                                 <span class="keybinding me-2">
-                                    <img src="{% static 'core/images/skippocytes.png' %}" alt=""  style='width: 15px;'>
+                                    <img src="{% static 'core/images/skippocytes.png' %}" alt="">
                                 </span>
                             {% endif %}
                             <span class="cell-name">Skippocytes</span>
@@ -459,7 +465,6 @@
                     let parentDiv = img.closest(".cell-image");
                     let aiClass = parentDiv.dataset.aiClass;
                     let userClass = parentDiv.dataset.userClass;
-                    console.log(aiClass, userClass);
         
                     if (aiClass !== userClass) {
                         parentDiv.classList.add("changed");
