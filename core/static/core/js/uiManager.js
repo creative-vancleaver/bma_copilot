@@ -81,16 +81,16 @@ export class UIManager {
         }
  
         // CALCULATE WINDOW SIZE BASED ON CONTENT
-        // const headerHeight = 80;
+        // const headerHeight = 100;
         // const buttonHeight = 50;
-        // const padding = 40;
-        // const paddingBottom = 40;
+        // const padding = 80;
+        // const paddingBottom = 80;
         
         // const windowWidth = previewCanvas.width + padding;
         // const windowHeight = previewCanvas.height + headerHeight + buttonHeight + padding + paddingBottom;
 
-        const windowWidth = previewCanvas.width + 300;
-        const windowHeight = previewCanvas.height + 500;
+        const windowWidth = previewCanvas.width + 100;
+        const windowHeight = previewCanvas.height + 100;
         
         // CALCULATE WINDOW CENTER BASED ON PARENT ELEMENT
         const parentLeft = window.screenX;
@@ -123,14 +123,14 @@ export class UIManager {
                         background: black;
                         color: white;
                         font-family: Arial, sans-serif;
-                        height: ${windowHeight}px;
+                        height: ${previewCanvas.height}px;
                         box-sizing: border-box;
-                        overflow: hidden;
                     }
                     .preview-container {
                         display: flex;
                         flex-direction: column;
                         height: 80%;
+                        overflow: hidden;
                     }
                     .preview-header {
                         text-align: center;
@@ -188,11 +188,12 @@ export class UIManager {
                     <div class="canvas-wrapper">
                         <canvas id="mirroredCanvas"></canvas>
                     </div>
-                    <div class="button-wrapper">
-                        <button class="btn-stop" id="stopRecordingButton">
-                            Stop Recording
-                        </button>
-                    </div>
+
+                </div>
+                <div class="button-wrapper">
+                    <button class="btn-stop" id="stopRecordingButton">
+                        Stop Recording
+                    </button>
                 </div>
             </body>
             </html>
