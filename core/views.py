@@ -17,7 +17,6 @@ CELL_ORDER = [
 ]
 
 def index(request):
-
     return render(request, 'core/index.html')
 
 @login_required
@@ -37,7 +36,6 @@ def JSON_case(request, case_id):
         cell_data = {'cells': []}
 
     cell_total = len(cell_data['cells'])
-    print(f'Total cells in JSON: { cell_total }')
 
     classification_groups = defaultdict(list)
 
@@ -51,16 +49,12 @@ def JSON_case(request, case_id):
         image_path = cell['cell_image_path']
         if image_path:
             filename = image_path.split('/')[-1]
-            print('filename = ', filename)
             try:
                 blob_url = get_blob_url('cells', filename)
                 cell['image_url'] = blob_url
             except Exception as e:
-                print(f'Error getting blob URL for { filename }: { str(e) }')
                 cell['image_url'] = None
 
-        
-        print('cell = ', cell)
         classification_groups[class_label].append(cell)
 
     for group in classification_groups.values():
@@ -78,8 +72,6 @@ def JSON_case(request, case_id):
     classification_groups = dict(sorted_groups)
 
     skippocytes_counts = len(classification_groups.get('skippocytes', []))
-    print('cell_total = ', cell_total)
-    print('skippocytes = ', skippocytes_counts)
     new_cell_total = cell_total - skippocytes_counts
 
     cell_view = JSONCellView()
@@ -103,7 +95,6 @@ def case(request, case_id):
     case = Case.objects.get(case_id=case_id)
     
     cell_total = Cell.objects.filter(region__video_id__case=case).count()
-    print(cell_total)
 
     classifications = (
         Cell.objects
@@ -161,7 +152,6 @@ def case(request, case_id):
         else:
             cls["image_url"] = f"/media/{cls.pop('cell_image_path')}" if cls.get('cell_image_path') else None
 
-        print('cell == ', cls)
         classification_groups[class_label].append(cls)
 
     classification_groups = dict(classification_groups)
