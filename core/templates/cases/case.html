@@ -341,8 +341,8 @@
                                         {% if cell.image_url %}
                                             <div 
                                                 class="cell-image"
-                                                data-ai-class="{{ cell.ai_class }}"
-                                                data-user-class="{{ cell.user_class }}"
+                                                data-ai-class="{{ cell.ai_cell_class }}"
+                                                data-user-class="{{ cell.user_cell_class }}"
                                                 data-class="{{ class_name }}" 
                                                 data-id="{{ cell.cell_id }}"
                                             >
@@ -459,6 +459,7 @@
                     let parentDiv = img.closest(".cell-image");
                     let aiClass = parentDiv.dataset.aiClass;
                     let userClass = parentDiv.dataset.userClass;
+                    console.log(aiClass, userClass);
         
                     if (aiClass !== userClass) {
                         parentDiv.classList.add("changed");

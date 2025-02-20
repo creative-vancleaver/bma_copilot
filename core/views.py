@@ -7,12 +7,13 @@ from django.shortcuts import render
 from decouple import config
 
 from cells.models import Cell, CellClassification
-from cells.views import CellView
+from cells.views import CellView, JSONCellView
 from .services.azure_blob_service import get_blob_url
 from cases.models import Case
 
 CELL_ORDER = [
-    'blasts_and_blast_equivalents', 'promyelocytes', 'myelocytes', 'metamyelocytes', 'neutrophils', 'monocytes', 'eosinophils', 'lymphocytes', 'plasma_cells', 'erythroid_precursors', 'skippocytes',
+    'blasts_and_blast_equivalents', 'promyelocytes', 'myelocytes', 'metamyelocytes', 'neutrophils', 'monocytes', 
+    'eosinophils', 'lymphocytes', 'plasma_cells', 'erythroid_precursors', 'skippocytes',
 ]
 
 def index(request):
@@ -41,15 +42,16 @@ def JSON_case(request, case_id):
     classification_groups = defaultdict(list)
 
     for cell in cell_data['cells']:
-        print(f'cell { cell }')
         user_class = cell['classification']['user_cell_class']
         ai_class = cell['classification']['ai_cell_class']
         class_label = user_class if user_class else ai_class
+        cell['user_cell_class'] = user_class
+        cell['ai_cell_class'] = ai_class
 
         image_path = cell['cell_image_path']
-        print(f'image path { image_path }')
         if image_path:
             filename = image_path.split('/')[-1]
+            print('filename = ', filename)
             try:
                 blob_url = get_blob_url('cells', filename)
                 cell['image_url'] = blob_url
@@ -57,11 +59,31 @@ def JSON_case(request, case_id):
                 print(f'Error getting blob URL for { filename }: { str(e) }')
                 cell['image_url'] = None
 
+        
+        print('cell = ', cell)
+        classification_groups[class_label].append(cell)
+
+    for group in classification_groups.values():
+        group.sort(key=lambda x: (
+            x['user_cell_class'] or '',
+            x['ai_cell_class'] or ''
+        ))
+
+    sorted_groups = {
+        class_name: classification_groups.get(class_name, [])
+        for class_name in CELL_ORDER
+        if class_name in classification_groups
+    }
+
+    classification_groups = dict(sorted_groups)
+
     skippocytes_counts = len(classification_groups.get('skippocytes', []))
+    print('cell_total = ', cell_total)
+    print('skippocytes = ', skippocytes_counts)
     new_cell_total = cell_total - skippocytes_counts
 
-    CellView = CellView()
-    diff_counts = CellView.get_diff_counts()
+    cell_view = JSONCellView()
+    diff_counts = cell_view.get_diff_counts(case_id)
 
     context = {
         'case': case,
@@ -88,8 +110,8 @@ def case(request, case_id):
         .filter(region__video_id__case=case)
         .select_related('cellclassification')
         .annotate(
-            ai_class=F("cellclassification__ai_cell_class"),
-            user_class=F("cellclassification__user_cell_class"),
+            ai_cell_class=F("cellclassification__ai_cell_class"),
+            user_cell_class=F("cellclassification__user_cell_class"),
             # image_url=F("image"),  # Ensure image URL is included
             myelocyte_score=F("cellclassification__myelocytes_score"),
             metamyelocyte_score=F("cellclassification__metamyelocytes_score"),
@@ -104,13 +126,13 @@ def case(request, case_id):
             
         )
         .values(
-            "cell_id", "cell_image_path", "ai_class", "user_class",
+            "cell_id", "cell_image_path", "ai_cell_class", "user_cell_class",
             "myelocyte_score", "metamyelocyte_score", "neutrophil_score",
             "monocyte_score", "eosinophil_score", "erythroid_precursor_score",
             "lymphocyte_score", "plasma_cell_score", "blast_score",
             "skippocyte_score", 
         )
-        .order_by("user_class", "ai_class")
+        .order_by("user_cell_class", "ai_cell_class")
     )
 
     # Convert queryset into a structured dictionary in a single step
@@ -120,14 +142,13 @@ def case(request, case_id):
 
     for cls in classifications:
 
-        user_class = cls['user_class']
-        ai_class = cls['ai_class']
+        user_class = cls['user_cell_class']
+        ai_class = cls['ai_cell_class']
         class_label = user_class if user_class else ai_class
 
         if USE_AZURE_STORAGE:
             image_path = cls.pop('cell_image_path')
             if image_path:
-                print('image_path ', image_path)
                 filename = image_path.split('/')[-1]
                 try:
                     response = get_blob_url("cells", filename)
@@ -140,6 +161,7 @@ def case(request, case_id):
         else:
             cls["image_url"] = f"/media/{cls.pop('cell_image_path')}" if cls.get('cell_image_path') else None
 
+        print('cell == ', cls)
         classification_groups[class_label].append(cls)
 
     classification_groups = dict(classification_groups)
