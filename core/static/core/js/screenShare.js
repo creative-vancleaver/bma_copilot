@@ -318,18 +318,18 @@ export class ScreenShare {
                 updateProgressBar();
 
                 // CREATE VIDEO STATUS
-                const postResponse = await fetch('/api/cases/video-status/', {
-                    method: 'POST',
-                    headers: {
-                        'Cotent-Type': 'application/json',
-                        'X-CSRFToken': ScreenShare.getCSRFToken()
-                    },
-                    body: JSON.stringify({ video_id : result.video_id })
-                });
+                // const postResponse = await fetch('/api/cases/video-status/', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Cotent-Type': 'application/json',
+                //         'X-CSRFToken': ScreenShare.getCSRFToken()
+                //     },
+                //     body: JSON.stringify({ video_id : result.video_id })
+                // });
 
-                if (!postResponse.ok) {
-                    throw new Error(`Failed to create video status: ${ postResponse.status }`);
-                }
+                // if (!postResponse.ok) {
+                //     throw new Error(`Failed to create video status: ${ postResponse.status }`);
+                // }
                 checkVideoStatus(result.video_id);
                 
             } else {

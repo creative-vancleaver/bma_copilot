@@ -2,6 +2,7 @@ import os
 import base64
 import json
 import pytz
+from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
 from decouple import config
@@ -18,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Case, Video
 from .utils import upload_to_azure_blob
-from .services.video_service import create_video_status, get_video_status, complete_video_status
+from .services.video_service import upload_video_notice, create_video_status, get_video_status, complete_video_status, get_cells_json
 
 USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='False').lower() == 'true'
 USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False').lower() == 'true'
@@ -48,17 +49,8 @@ def save_recording(request):
         # case = Case.objects.get(case_id=case_id)
         case = Case.objects.create(user=request.user)
         case_id = case.case_id
-
         video_id = f"{ case_id }_1"
 
-        # new_video = Video.objects.create(
-        #     case=case, 
-        #     TL_x=crop_data.get('TL_x'), 
-        #     TL_y=crop_data.get('TL_y'),
-        #     BR_x=crop_data.get('BR_x'),
-        #     BR_y=crop_data.get('BR_y'),    
-        # )
-        
         # GENERATE FILENAME + PATH
         # EACH CASE HAS 1 VIDEO - THEREFORE VIDEO_ID = 1.
         filename = f"{case_id}_1.webm"
@@ -67,23 +59,28 @@ def save_recording(request):
         try:
             if USE_AZURE_STORAGE:
             # UPLOAD TO AZURE STORAGE BLOB
-                # blob_url = upload_to_azure_blob(video_file, filename)
-                blob_url = file_path
-                
-            # else:
-            #     # Save locally
-            #     local_path = os.path.join(settings.MEDIA_ROOT, file_path)
-            #     os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                
-            #     with open(local_path, 'wb+') as destination:
-            #         for chunk in video_file.chunks():
-            #             destination.write(chunk)
+                blob_url = upload_to_azure_blob(video_file, filename)
+                # blob_url = file_path
 
+                payload = {
+                    'video_id': video_id,
+                    'TL_x': crop_data.get('TL_x'),
+                    'TL_y': crop_data.get('TL_y'),
+                    'BR_x': crop_data.get('BR_x'),
+                    'BR_y': crop_data.get('BR_y')
+                }
+
+                response = upload_video_notice(payload)
+
+                if response.get('statusCode') != 200:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'video upload notice failed: { response.body.message }'
+                    }, status=response.status)
 
             return JsonResponse({
                 "success": True,
                 "case": case.case_id,
-                # "video_id": new_video.video_id,
                 "video_id": video_id,
                 "filename": filename,
             })
@@ -101,6 +98,7 @@ def save_recording(request):
             "success": False,
             "error": str(e)
         }, status=500)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class VideoStatusView(View):
@@ -127,6 +125,7 @@ class VideoStatusView(View):
             return JsonResponse({ 'error': 'Missing video_id' }, status=400)
         
         response = get_video_status(video_id)
+        print(response)
         return JsonResponse(response)
     
     def put(self, request):
@@ -136,8 +135,34 @@ class VideoStatusView(View):
             if not video_id:
                 return JsonResponse({ 'error': 'Missing video_id' }, status=400)
             
-            response = complete_video_status(video_id)
-            return JsonResponse(response)
+            video_status_response = complete_video_status(video_id)
+
+            # case_id = data.get('case_id')
+            # cells_json_response = get_cells_json(case_id)
+
+            # if cells_json_response.get('statusCode') != 200:
+            #     return JsonResponse({
+            #         'success': False,
+            #         'error': 'Failed to fetch cell data'
+            #     }, status=500)
+            
+            # try:
+            
+            #     cell_data = cells_json_response.get('body')
+            #     print(cell_data)
+            #     data_dir = Path('data/cells') 
+            #     data_dir.mkdir(parents=True, exist_ok=True)
+
+            #     with open(data_dir / f'{ case_id }.json', 'w') as f:
+            #         json.dump(cell_data, f)
+
+            # except Exception as e:
+            #     print(str(e))
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Video status updated and cell data fetched'
+            })
 
         except json.JSONDecodeError:
             return JsonResponse({ 'error': 'Invalid JSON' }, 400)

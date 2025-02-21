@@ -89,9 +89,9 @@ function createProgressBar() {
 export function checkVideoStatus(videoId) {
 
     const processingContainer = document.getElementById('processingContainer');
-    const MAX_CHECK_TIME = 6000000 // 10 MINUTES
+    const MAX_CHECK_TIME = 150000 // 2 MINUTES
     const CHECK_INTERVAL = 3000; // 3 SECONDS
-    const MESSAGE_INTERVAL = 15000 // 15 SECONDS
+    const MESSAGE_INTERVAL = 10000 // 15 SECONDS
     let elapsedTime = 0;
 
     const extractCaseId = (str) => {
@@ -176,18 +176,45 @@ export function checkVideoStatus(videoId) {
                 console.log('Updated Processing State:', processingState);
 
                 if (data.status === 'completed') {
-                    processingState.status = 'completed';
-                    processingContainer.style.display = 'none';
-                    clearInterval(statusCheckInterval);
+                    // processingState.status = 'completed';
+                    // processingContainer.style.display = 'none';
+                    // clearInterval(statusCheckInterval);
 
-                    const putResponse = await fetch('/api/cases/video-status/', {
-                        method:'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': ScreenShare.getCSRFToken()
-                        },
-                        body: JSON.stringify({ video_id: videoId })
-                    });
+
+                    const getCellsJson = await fetch(`/api/cells/get_cells_file/${ caseId }/`);
+                    const getCellsJsonResponse = await getCellsJson.json();
+                    console.log('getCellsJSON = ', getCellsJsonResponse);
+
+                    if (getCellsJson.ok) {
+                        processingState.status = 'completed';
+                        processingContainer.style.display = 'none';
+                        clearInterval(statusCheckInterval);
+                    } else {
+                        console.log('ERROR ', getCellsJsonResponse);
+                    }
+                    // const putResponse = await fetch('/api/cases/video-status/', {
+                    //     method:'PUT',
+                    //     headers: {
+                    //         'Content-Type': 'application/json',
+                    //         'X-CSRFToken': ScreenShare.getCSRFToken()
+                    //     },
+                    //     body: JSON.stringify({ 
+                    //         video_id: videoId,
+                    //         case_id: caseId
+                    //     })
+                    // });
+                    // console.log('putResponse ', putResponse);
+
+                    // if (putResponse.ok) {
+                    //     processingState.status = 'completed';
+                    //     processingContainer.style.display = 'none';
+                    //     clearInterval(statusCheckInterval);
+                    // } else {
+                    //     console.log('Error updating video status and fetching cell data ', getResponse.json());
+                    //     processingContainer.style.display = 'none';
+                    // }
+
+
                     
                 } else if (data.status === 'error') {
                     processingState.status = 'error';

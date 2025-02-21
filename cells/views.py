@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 
+from cases.services.video_service import get_cells_json
 from core.services.azure_blob_service import get_blob_url
 from .models import Cell, CellDetection, CellClassification
 
@@ -138,6 +139,63 @@ class JSONCellView(View):
                 'success': False,
                 'error': str(e)
             }, status=500)
+
+@csrf_exempt
+def get_cells_file(request, case_id):
+    if not case_id:
+        return JsonResponse({
+            'success': False,
+            'error': 'Missing case_id'
+        }, status=400)
+
+    cells_json_response = get_cells_json(case_id)
+
+    if cells_json_response.get('statusCode') != 200:
+        return JsonResponse({
+            'success': False,
+            'error': 'Failed to fetch cell data'
+        }, status=500)
+
+    try:
+        # Parse the JSON string inside 'body' if necessary
+        cell_data_raw = cells_json_response.get('body')
+
+        if not cell_data_raw:
+            return JsonResponse({
+                'success': False,
+                'error': 'No body found in response'
+            }, status=500)
+
+        # Convert body to a Python dictionary if it's a JSON string
+        if isinstance(cell_data_raw, str):
+            try:
+                cell_data = json.loads(cell_data_raw)
+            except json.JSONDecodeError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid JSON format in body'
+                }, status=500)
+        else:
+            cell_data = cell_data_raw  # Already a dictionary
+
+        print(cell_data)
+
+        # Ensure directory exists
+        data_dir = Path('data/cells')
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save to file
+        with open(data_dir / f'{case_id}.json', 'w') as f:
+            json.dump(cell_data, f, indent=4)
+
+    except Exception as e:
+        print(str(e))
+        return JsonResponse({
+            'success': False,
+            'error': f'Error processing cell data: {str(e)}'
+        }, status=500)
+
+    return JsonResponse({'success': True, 'data': cell_data})
 
 class CellView(View):
 
