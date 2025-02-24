@@ -37,3 +37,10 @@ cases_backup.csv
 test_adding_to_db.py
 dump.rdb
 schema_output.txt
+
+# PROD FILES
+/staticfiles/
+/staticfiles/*
+
+/data/cells/*
+!/data/cells/1.json
