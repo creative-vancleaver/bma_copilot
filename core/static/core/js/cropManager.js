@@ -10,6 +10,8 @@ export class CropManager {
         this.startY = 0;
         this.currentX = 0;
         this.currentY = 0;
+
+        this.minCrop = 512;
         
         this.cropBox = document.querySelector('.crop-box');
         this.cropOverlay = document.querySelector('.crop-overlay');
@@ -85,7 +87,7 @@ export class CropManager {
 
         // Only enable confirm button if there's a valid crop selection
         const cropBox = this.cropBox.getBoundingClientRect();
-        if (cropBox.width > 10 && cropBox.height > 10) {  // Ensure minimum size
+        if (cropBox.width > this.minCrop && cropBox.height > this.minCrop) {  // Ensure minimum size
             this.uiManager.updateConfirmRecordButton(true);
             let message = `Select <span>Confirm Region</span> to begin recording.`;
             let statusType = 'active';
@@ -93,7 +95,7 @@ export class CropManager {
         } else {
             this.cropBox.style.display = 'none';  // Hide tiny/invalid selections
             this.uiManager.updateConfirmRecordButton(false);
-            this.uiManager.updateStatus("Please select a larger preview area");
+            this.uiManager.updateStatus("Please select a larger preview area.");
         }
     }
 

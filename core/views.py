@@ -35,6 +35,7 @@ def JSON_case(request, case_id):
         cell_data = {'cells': []}
 
     cell_total = len(cell_data['cells'])
+    print(cell_total)
 
     classification_groups = defaultdict(list)
 
@@ -70,11 +71,16 @@ def JSON_case(request, case_id):
 
     classification_groups = dict(sorted_groups)
 
+    new_cell_total = sum(len(value) for key, value in classification_groups.items() if key != 'skippocytes')
+
     skippocytes_counts = len(classification_groups.get('skippocytes', []))
-    new_cell_total = cell_total - skippocytes_counts
+    # new_cell_total = cell_total - skippocytes_counts
 
     cell_view = JSONCellView()
     diff_counts = cell_view.get_diff_counts(case_id)
+    cell_total = cell_view.get_cell_counts(case_id)
+    # new_cell_total = cell_total - skippocytes_counts
+    print(diff_counts, cell_total)
 
     context = {
         'case': case,

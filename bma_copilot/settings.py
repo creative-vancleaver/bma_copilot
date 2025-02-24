@@ -119,6 +119,8 @@ if (config('USE_AZURE_DB') == 'True'):
 else:
     print('SQLite')
     print(config('USE_AZURE_DB'))
+    print('S3?')
+    print(config('UPLOAD_TO_S3'))
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

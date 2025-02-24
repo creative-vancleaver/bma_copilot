@@ -33,16 +33,20 @@
     <nav id="navBar" class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <div class="nav-brand ms-auto">
-                <img src="{% static 'core/images/logo.png' %}" alt="BMACopilot Logo" class="logo">
-                <span class="brand-name">BMACopilot</span>
+                <a href="{% url 'home' %}" style="text-decoration: none; display: flex; align-items: center; gap: 1rem;">
+                    <img src="{% static 'core/images/logo.png' %}" alt="BMACopilot Logo" class="logo">
+                    <span class="brand-name">BMACopilot</span>
+                </a>
             </div>
             <ul class="navbar-nav ms-auto me-3">
                 <li class="nav-item">
-                    <a href="{% url 'home' %}" class="nav-link">Home</a>
+                    <a href="{% url 'microscope-viewer' %}" class="nav-link">Upload</a>
                 </li>
-                <li id='help' class="nav-item">
-                    <span class="nav-link" style="cursor: pointer;">Help</span>
-                </li>
+                {% if 'case' in request.path %}
+                    <li id='help' class="nav-item">
+                        <span class="nav-link" style="cursor: pointer;">Help</span>
+                    </li>
+                {% endif %}
                 {% if request.user.is_authenticated %}
                     <li class="nav-item"><a href="{% url 'logout' %}?next={% url 'login' %}" class="nav-link">Logout</a></li>
                 {% else %}
