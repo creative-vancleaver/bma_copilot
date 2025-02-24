@@ -2,6 +2,7 @@ import os
 import base64
 import json
 import pytz
+import shutil
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
@@ -187,10 +188,11 @@ def update_case_status(request, case_id):
             case.case_status = new_status
             case.save()
 
-            return JsonResponse({
-                'success': True,
-                'new_status': case.case_status
-            })
+            if config('UPLOAD_TO_S3', default=True).lower() == 'true':
+                result = save_to_s3_mount(case_id)
+                if result['success']:
+                    return JsonResponse(result, statu=200)
+                return JsonResponse(result, status=500)
         
         except Exception as e:
             return JsonResponse({
@@ -203,6 +205,30 @@ def update_case_status(request, case_id):
         'error': 'Invaid request method'
     }, status=500)
 
+def save_to_s3_mount(case_id):
+    local_cells_data = Path(f'/home/ubuntu/bma_copilot/data/cells/{ case_id }.json')
+    s3_mount_path = Path(f'/home/ubuntu/S3/cells-json-updated{ case_id }.json')
+
+    if not local_cells_data.exists():
+        return ({
+            'success': False,
+            'error': 'Local cell data not found'
+        })
+    
+    s3_mount_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        shutil.copy2(local_cells_data, s3_mount_path)
+        return ({
+            'success': True,
+            'message': f'File {case_id}.json saved to S3'
+        })
+    
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
 
 @csrf_exempt
 def save_screenshot(request, case_id):
