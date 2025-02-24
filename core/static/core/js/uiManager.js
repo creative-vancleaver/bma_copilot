@@ -79,6 +79,33 @@ export class UIManager {
             alert("No preview available!");
             return;
         }
+
+        const availableWidth = window.innerWidth;
+        const availableHeight = window.innerHeight;
+
+        const extraHeight = 70;
+        const extraWidth = 20;
+
+        const desiredWidth = previewCanvas.width;
+        const desiredHeight = previewCanvas.height + extraHeight;
+
+        const scaleFactor = Math.min(
+            1,
+            (availableWidth - extraWidth) / desiredWidth,
+            availableHeight / desiredHeight
+        );
+
+        const scaledCanvasWidth = Math.floor(previewCanvas.width * scaleFactor);
+        const scaledCanvasHeight = Math.floor(previewCanvas.height * scaleFactor);
+        const windowWidth = scaledCanvasWidth + extraWidth;
+        const windowHeight = scaledCanvasHeight + extraHeight;
+
+        const parentLeft = window.screenX;
+        const parentTop = window.screenY;
+        const parentWidth = window.outerWidth;
+        const parentHeight = window.outerHeight;
+        const left = parentLeft + (parentWidth - windowWidth) / 2;
+        const top = parentTop + (parentHeight - windowHeight) / 2;
  
         // CALCULATE WINDOW SIZE BASED ON CONTENT
         // const headerHeight = 100;
@@ -89,21 +116,21 @@ export class UIManager {
         // const windowWidth = previewCanvas.width + padding;
         // const windowHeight = previewCanvas.height + headerHeight + buttonHeight + padding + paddingBottom;
 
-        const windowWidth = previewCanvas.width + 100;
-        const windowHeight = previewCanvas.height + 100;
+        // const windowWidth = previewCanvas.width + 100;
+        // const windowHeight = previewCanvas.height + 100;
         
-        // CALCULATE WINDOW CENTER BASED ON PARENT ELEMENT
-        const parentLeft = window.screenX;
-        const parentTop = window.screenY;
-        const parentWidth = window.outerWidth;
-        const parentHeight = window.outerHeight;
+        // // CALCULATE WINDOW CENTER BASED ON PARENT ELEMENT
+        // const parentLeft = window.screenX;
+        // const parentTop = window.screenY;
+        // const parentWidth = window.outerWidth;
+        // const parentHeight = window.outerHeight;
 
-        // CALCULATE CENTER POSITION
-        const left = parentLeft + (parentWidth - windowWidth) / 2;
-        const top = parentTop + (parentHeight - windowHeight) / 2;
+        // // CALCULATE CENTER POSITION
+        // const left = parentLeft + (parentWidth - windowWidth);
+        // const top = parentTop + (parentHeight - windowHeight);
         
         const previewWindow = window.open("", "CroppedLivePreview", 
-            `width=${windowWidth},height=${windowHeight},left=${left},top=${top}`);
+            `width=${parentWidth},height=${parentHeight},left=${left},top=${top}`);
 
         if (!previewWindow) {
             this.updateStatus('Pop-ups are blocked. Please allow popups for this site.');
@@ -117,20 +144,21 @@ export class UIManager {
                 <style>
                     body { 
                         margin: 0; 
-                        padding: 20px;
-                        display: flex;
-                        flex-direction: column;
+                        // padding: 20px;
+                        // display: flex;
+                        // flex-direction: column;
                         background: black;
                         color: white;
                         font-family: Arial, sans-serif;
-                        height: ${previewCanvas.height}px;
+                        // height: ${previewCanvas.height}px;
                         box-sizing: border-box;
                     }
                     .preview-container {
                         display: flex;
                         flex-direction: column;
-                        height: 80%;
-                        overflow: hidden;
+                        // height: 80%;
+                        // overflow: hidden;
+                        align-items: center;
                     }
                     .preview-header {
                         text-align: center;
@@ -147,15 +175,18 @@ export class UIManager {
                         display: block;
                     }
                     .canvas-wrapper {
-                        flex: 1 1 auto;
+                        // flex: 1 1 auto;
+                        flex: 1;
                         display: flex;
                         justify-content: center;
                         align-items: center;
                     }
                     canvas { 
-                        display: block;
-                        width: ${previewCanvas.width}px;
-                        height: ${previewCanvas.height}px;
+                        // display: block;
+                        // width: ${previewCanvas.width}px;
+                        // height: ${previewCanvas.height}px;
+                        width: ${ scaledCanvasWidth }px;
+                        height: ${ scaledCanvasHeight }px;
                         image-rendering: -webkit-optimize-contrast;
                         image-rendering: crisp-edges;
                         image-rendering: pixelated;

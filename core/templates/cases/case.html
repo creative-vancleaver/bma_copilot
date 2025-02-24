@@ -310,14 +310,14 @@
             </div>
 
             <div class="sidebar-section">
-                <h3>Close Case</h3>
+                <h3>Mark Case Complete</h3>
                 {% if case.case_status == 'completed' or case.case_status == 'archived' %}
                     <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed" disabled>
-                        Case Closed
+                        Case Completed
                     </button>
                 {% else %}
                     <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed">
-                        Close Case
+                        Complete Case
                     </button>
                 {% endif %}
             </div>
