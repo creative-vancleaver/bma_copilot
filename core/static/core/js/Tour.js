@@ -5,7 +5,7 @@ export function startTour() {
     const tour = new Shepherd.Tour({
         defaultStepOptions: {
             classes: 'shadow-md bg-purple-dark',
-            // scrollTo: true,
+            scrollTo: true,
             // showCancelLink: true
         }
     });

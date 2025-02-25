@@ -30,7 +30,7 @@ export function updateProgressBar() {
         statusDiv.textContent = `Uploading: ${uploadState.progress}%`;
         recordingIndicator.classList.add('uploading');
 
-    } else if (processingState.status === 'pending') {
+    } else if (processingState.status === 'pending' || processingState.status === 'running') {
 
         statusDiv.innerHTML = `${ processingState.message }`;
         recordingIndicator.classList.remove('uploading', 'success');

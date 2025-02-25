@@ -16,12 +16,12 @@
         width: 300px;
         background: #f0ebf8;
         padding: 20px;
-        height: 100vh;
+        {% comment %} height: 100vh; {% endcomment %}
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 
         position: sticky;
         top: 64px;
-        height: calv(100vh - 64px);
+        height: calc(100vh - 64px);
         {% comment %} height: calc(100vh - 64px); {% endcomment %}
         {% comment %} overflow-y: auto; {% endcomment %}
     }
@@ -44,7 +44,12 @@
     .sidebar-section h3 {
         font-size: 16px;
         color: #5a3ea3;
-        margin-top: 10px;
+        {% comment %} margin-top: 10px; {% endcomment %}
+    }
+
+    .sidebar-section h5 {
+        font-size: 15px;
+        color: #222;
     }
     
     .sidebar-section ul {
@@ -199,6 +204,7 @@
 
     .export-buttons {
         margin-top: 1rem;
+        justify-content: space-around;
     }
 
     .export-buttons .fas {
@@ -232,8 +238,9 @@
 
     <div class="container">
         
-        <aside class="sidebar">
+        <aside class="sidebar min-vh-80 sticky-top">
             <div class="sidebar-header">
+                {% comment %} <h2>Summary</h2> {% endcomment %}
                 <h2>Summary</h2>
                 {% comment %} <button class="menu-toggle">XX</button> {% endcomment %}
             </div>
@@ -242,8 +249,9 @@
                 <h3>Annotated Regions</h3>
             </div> {% endcomment %}
             <div class="sidebar-section">
-                <h3>Differential Count</h3>
-                <h5>Cell Total: {{ cell_total }}</h5>
+                {% comment %} <h3>Differential Count</h3> {% endcomment %}
+                <h3 id="cellTotal">Cell Total: {{ cell_total }}</h3>
+                {% comment %} <h5>Cell Total: {{ cell_total }}</h5> {% endcomment %}
                 <ul>
                     {% for class_name in cell_order %}
                         {% if class_name != 'skippocytes' %}
@@ -296,21 +304,21 @@
 
                 </ul>
 
-                <div class="export-buttons mt-3">
-                    <button id="copyDiff" class="btn btn-tertiary btn-sm w-100 mb-2">
+                <div class="export-buttons mt-3 row">
+                    <button id="copyDiff" class="btn btn-tertiary btn-sm mb-2 col-5">
                         <i class="fas fa-clipboard"></i>
-                        Copy to Clipboard
+                        Copy
                     </button>
-                    <button id="saveReport" class="btn btn-tertiary btn-sm w-100">
+                    <button id="saveReport" class="btn btn-tertiary btn-sm mb-2 col-5">
                         <i class="fas fa-download"></i>
-                        Save Report
+                        Save
                     </button>
                 </div>
 
             </div>
 
             <div class="sidebar-section">
-                <h3>Mark Case Complete</h3>
+                {% comment %} <h3>Mark Case Complete</h3> {% endcomment %}
                 {% if case.case_status == 'completed' or case.case_status == 'archived' %}
                     <button id="closeCase" class="btn btn-case w-100 d-flex justify-content-center" data-case-id="{{ case.case_id }}" data-status="completed" disabled>
                         Case Completed
@@ -412,16 +420,24 @@
 
             $('#copyDiff').on('click', function() {
                 let diffText = 'Differential Count Report\n';
-                diffText += '=========================\n';
-                diffText += `Total Cells: ${$('h5').text().split(': ')[1]}\n\n`;
+                // diffText += '=========================\n';
+                // diffText += `Total Cells: ${$('h5').text().split(': ')[1]}\n\n`;
+                let totalCells = $('#cellTotal').text().split(': ')[1].trim();
 
-                // GET ALL CELL TYPES + THEIR PRECENTAGES
+                diffText += "Cell Type\tCount\tPercentage\n";
+
+                // GET ALL CELL TYPES + THEIR PERCENTS 
                 $('.cell-link').each(function() {
                     const cellName = $(this).find('.cell-name').text().trim();
                     const count = $(this).find('.count').text().trim();
-                    const percent = $(this).find('.percent').text().trim();
-                    diffText += `${ cellName }: ${ count } ${ percent }\n`;
+                    let percent = $(this).find('.percent').text().trim();
+
+                    percent = percent.replace('%', '').trim();
+
+                    diffText += `${ cellName }\t${ count }\t${ percent }\n`;
                 });
+
+                diffText += `Total Cells\t${ totalCells }\t\n`;
 
                 // COPY TO CLIPBOARD 
                 navigator.clipboard.writeText(diffText).then(() => {
