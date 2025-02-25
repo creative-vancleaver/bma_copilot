@@ -165,7 +165,7 @@ export function checkVideoStatus(videoId) {
 
 
                 // OVERRIDE WITH SIMULATED MESSAGES
-                if (data.status === 'pending') {
+                if (data.status === 'pending' || data.status === 'running') {
                     console.log('pending ', currentMessage.message);
                     processingState.message = currentMessage.message;
                     processingState.progress = currentMessage.progress;
