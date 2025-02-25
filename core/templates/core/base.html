@@ -56,9 +56,40 @@
         </div>
     </nav>
 
+    <span id="topDiv" class="top-div" onClick="toTop()">
+        <i id="topBtn" class="fa-solid fa-arrow-up tob-btn"></i>
+            <p>Top</p>
+    </span>
+
     <main class="app-container">
         {% block content %}{% endblock content %}
     </main>
+
+    <script>
+        
+        let btn = document.getElementById('topBtn');
+        let btnDiv = document.getElementById('topDiv');
+
+        window.onscroll = function() {
+            scroll();
+        }
+
+        function scroll() {
+            if (document.body.scrollTop > 64 || document.documentElement.scrollTop > 64) {
+                btn.style.display = "block";
+                btnDiv.style.display = "block";
+            } else {
+                btn.style.display = "none";
+                btnDiv.style.display = "none";
+            }
+        }
+
+        function toTop() {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        }
+
+    </script>
 
 </body>
 

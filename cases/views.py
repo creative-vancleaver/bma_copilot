@@ -191,7 +191,7 @@ def update_case_status(request, case_id):
             if config('UPLOAD_TO_S3', default=True).lower() == 'true':
                 result = save_to_s3_mount(case_id)
                 if result['success']:
-                    return JsonResponse(result, statu=200)
+                    return JsonResponse(result, status=200)
                 return JsonResponse(result, status=500)
         
         except Exception as e:
