@@ -33,26 +33,34 @@
     <nav id="navBar" class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <div class="nav-brand ms-auto">
-                <a href="{% url 'home' %}" style="text-decoration: none; display: flex; align-items: center; gap: 1rem;">
+                {% comment %} <a href="{% url 'home' %}" style="text-decoration: none; display: flex; align-items: center; gap: 1rem;"> {% endcomment %}
                     <img src="{% static 'core/images/logo.png' %}" alt="BMACopilot Logo" class="logo">
                     <span class="brand-name">BMACopilot</span>
-                </a>
+                {% comment %} </a> {% endcomment %}
             </div>
-            <ul class="navbar-nav ms-auto me-3">
-                <li class="nav-item">
-                    <a href="{% url 'microscope-viewer' %}" class="nav-link">Upload</a>
-                </li>
-                {% if 'case' in request.path %}
-                    <li id='help' class="nav-item">
-                        <span class="nav-link" style="cursor: pointer;">Help</span>
+
+            {% comment %} <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenet"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggle-icon"></span>
+            </button> {% endcomment %}
+
+            {% comment %} <div class="collapse navbar-collapse" id="navbarContent"> {% endcomment %}
+                <ul class="navbar-nav flex-row gap-3 ms-auto me-3">
+                    <li class="nav-item">
+                        <a href="{% url 'microscope-viewer' %}" class="nav-link">Upload</a>
                     </li>
-                {% endif %}
-                {% if request.user.is_authenticated %}
-                    <li class="nav-item"><a href="{% url 'logout' %}?next={% url 'login' %}" class="nav-link">Logout</a></li>
-                {% else %}
-                    <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Login</a></li>
-                {% endif %}
-            </ul>
+                    {% if 'case' in request.path %}
+                        <li id='help' class="nav-item">
+                            <span class="nav-link" style="cursor: pointer;">Help</span>
+                        </li>
+                    {% endif %}
+                    {% if request.user.is_authenticated %}
+                        <li class="nav-item"><a href="{% url 'logout' %}?next={% url 'login' %}" class="nav-link">Logout</a></li>
+                    {% else %}
+                        <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Login</a></li>
+                    {% endif %}
+                </ul>
+            {% comment %} </div> {% endcomment %}
         </div>
     </nav>
 
