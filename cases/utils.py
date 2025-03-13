@@ -1,11 +1,39 @@
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from azure.core.exceptions import ResourceExistsError
+from datetime import datetime, timezone, timedelta
 from django.conf import settings
 
 from decouple import config
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+AZURE_ACCOUNT_NAME = config('AZZURE_ACCOUNT_NAME', default=None)
+AZURE_ACCOUNT_KEY = config('AZURE_ACCOUNT_KEY', default=None)
+AZURE_CONTAINER_NAME = config('AZURE_STORAGE_CONTAINER', default=None)
+
+def generate_sas_token():
+
+    if not AZURE_ACCOUNT_NAME or not AZURE_ACCOUNT_KEY or not AZURE_CONTAINER_NAME:
+        raise ValueError('Azure Blob Storage credentials are missing or not loaded properly')
+    
+    try:
+        expiry = datetime.now(timezone.utc) + timedelta(days=30)
+
+        sas_token = generate_sas_token(
+            AZURE_ACCOUNT_NAME,
+            AZURE_CONTAINER_NAME,
+            account_key=AZURE_ACCOUNT_KEY,
+            permission=BlobSasPermissions(read=True, write=True, create=True, delete=True, list=True),
+            expiry=expiry
+        )
+
+        return sas_token
+
+    except Exception as e:
+        logger.warning(f'Error generating SAS token: {e}')
+
 
 def upload_to_azure_blob(file_obj, filename):
     use_azure_storage = config('USE_AZURE_STORAGE', default='False').lower() == 'true'
@@ -20,6 +48,11 @@ def upload_to_azure_blob(file_obj, filename):
         # RETURN FAKE URL FOR DEV TESTING
         print("DEBUG MODE: Skipping Azure Upload")
         return f"http://fake-azure-url.com/video.webm"
+    
+    sas_token = generate_sas_token()
+    if not sas_token:
+        logger.warning('Failed to generate SAS token.')
+        return False
 
     try:
 
@@ -61,4 +94,4 @@ def upload_to_azure_blob(file_obj, filename):
         logger.info(f"Error uploading to Azure Blob Storage: { str(e) }")
 
         # raise
-        return None
+        return False
