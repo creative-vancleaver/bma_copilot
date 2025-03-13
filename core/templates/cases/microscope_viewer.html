@@ -3,6 +3,9 @@
 
 {% block head %}
     <script type="module" src="{% static 'core/js/main.js' %}"></script>
+    <script>
+        let user = '{{ user }}';
+    </script>
 {% endblock head %}
 
     {% block content %}

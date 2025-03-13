@@ -170,11 +170,16 @@ export class ScreenShare {
                 video: {
                     cursor: "never",
                     displaySurface: "window",
+
+                    height: { max: 3840 }, // MAX RESOLUTION (4K)
+                    width: { max: 2160 },
+                    frameRate: { ideal: 60, max: 60 }, // HIGH FRAMERATE TO REDUCE MOTION BLUR
                 },
                 audio: false
             });
 
             screenContainer.style.display = 'inline-block';
+            sharedScreen.style.filter = "contrast(110%) brightness(105%)";
             sharedScreen.srcObject = this.stream;
             recordButton.style.display = "inline-block";
 
@@ -238,7 +243,10 @@ export class ScreenShare {
 
         this.recordedChunks = [];
 
-        this.recorder = new MediaRecorder(this.stream, { mimeType: "video/webm" });
+        this.recorder = new MediaRecorder(this.stream, { 
+            mimeType: "video/webm",
+            videoBitsPerSecond: 15_000_000 // HIGH BIT RATE QUALITY
+        });
 
         this.recorder.ondataavailable = event => {
             if (event.data.size > 0) {
@@ -298,6 +306,13 @@ export class ScreenShare {
         uploadState.status = 'uploading';
         uploadState.error = null;
         updateProgressBar();
+
+        // SAVE VIDEO LOCALLY
+        // const url = URL.createObjectURL(blob);
+        // const a = document.createElement("a");
+        // a.href = url;
+        // a.download = `high_res_screen_recording.webm`;
+        // a.click();
 
         try {
 

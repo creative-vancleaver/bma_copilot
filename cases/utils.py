@@ -4,6 +4,9 @@ from django.conf import settings
 
 from decouple import config
 
+import logging
+logger = logging.getLogger(__name__)
+
 def upload_to_azure_blob(file_obj, filename):
     use_azure_storage = config('USE_AZURE_STORAGE', default='False').lower() == 'true'
     print('user azure storage ? ', use_azure_storage)
@@ -21,6 +24,8 @@ def upload_to_azure_blob(file_obj, filename):
     try:
 
         print('use azure storage')
+        logger.info('use azure storage')
+
         connection_string = settings.AZURE_STORAGE_CONNECTION_STRING
         container_name = settings.AZURE_STORAGE_CONTAINER
 
@@ -29,8 +34,10 @@ def upload_to_azure_blob(file_obj, filename):
 
         if not container_client.exists():
             print(f'creationg container: { container_name }')
+            logger.info(f'creationg container: { container_name }')
         else:
             print(f'container { container_name } already exists')
+            logger.info(f'container { container_name } already exists')
 
         # try:
         #     container_client = blob_service_client.create_container(container_name)
@@ -41,12 +48,17 @@ def upload_to_azure_blob(file_obj, filename):
 
         blob_client.upload_blob(file_obj, overwrite=True)
         print(f"Uplaoded { filename } to Azure Blob Storage")
+        logger.info(f"Uplaoded { filename } to Azure Blob Storage")
 
         print(f'uploaded { filename } to blob storage: { blob_client.url }')
+        logger.info(f'uploaded { filename } to blob storage: { blob_client.url }')
+
         # Return the blob URL
         return blob_client.url
 
     except Exception as e:
         print(f"Error uploading to Azure Blob Storage: { str(e) }")
+        logger.info(f"Error uploading to Azure Blob Storage: { str(e) }")
+
         # raise
         return None
