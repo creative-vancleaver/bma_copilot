@@ -21,7 +21,11 @@ def index(request):
 
 @login_required
 def microscope_viewer(request):
-    return render(request, 'cases/microscope_viewer.html')
+    user = request.user
+    context = {
+        'user': user
+    }
+    return render(request, 'cases/microscope_viewer.html', context)
 
 @login_required
 def JSON_case(request, case_id):

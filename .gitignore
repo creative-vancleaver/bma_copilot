@@ -38,6 +38,9 @@ test_adding_to_db.py
 dump.rdb
 schema_output.txt
 
+# LOGS
+/logs/*
+
 # PROD FILES
 /staticfiles/
 /staticfiles/*

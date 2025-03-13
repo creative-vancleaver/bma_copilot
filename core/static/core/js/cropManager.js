@@ -11,7 +11,7 @@ export class CropManager {
         this.currentX = 0;
         this.currentY = 0;
 
-        this.minCrop = 512;
+        this.minCrop = 300;
         
         this.cropBox = document.querySelector('.crop-box');
         this.cropOverlay = document.querySelector('.crop-overlay');

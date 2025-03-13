@@ -22,6 +22,9 @@ from .models import Case, Video
 from .utils import upload_to_azure_blob
 from .services.video_service import upload_video_notice, create_video_status, get_video_status, complete_video_status, get_cells_json
 
+import logging
+logger = logging.getLogger(__name__)
+
 USE_AZURE_STORAGE = config('USE_AZURE_STORAGE', default='False').lower() == 'true'
 USE_AZURE_SERVICES = config('USE_AZURE_SERVICES', default='False').lower() == 'true'
 
@@ -72,6 +75,8 @@ def save_recording(request):
                 }
 
                 response = upload_video_notice(payload)
+
+                print('blob URL === ', blob_url);
 
                 if response.get('statusCode') != 200:
                     return JsonResponse({
