@@ -72,138 +72,112 @@ export class UIManager {
     }
 
     openPreviewWindow() {
-        
         const previewCanvas = document.getElementById("previewCanvas");
-
         if (!previewCanvas) {
             alert("No preview available!");
             return;
         }
-
-        const availableWidth = window.innerWidth;
-        const availableHeight = window.innerHeight;
-
-        const extraHeight = 70;
-        const extraWidth = 20;
-
-        const desiredWidth = previewCanvas.width;
-        const desiredHeight = previewCanvas.height + extraHeight;
-
-        const scaleFactor = Math.min(
-            1,
-            (availableWidth - extraWidth) / desiredWidth,
-            availableHeight / desiredHeight
-        );
-
-        const scaledCanvasWidth = Math.floor(previewCanvas.width * scaleFactor);
-        const scaledCanvasHeight = Math.floor(previewCanvas.height * scaleFactor);
-        const windowWidth = scaledCanvasWidth + extraWidth;
-        const windowHeight = scaledCanvasHeight + extraHeight;
-
-        const parentLeft = window.screenX;
-        const parentTop = window.screenY;
-        const parentWidth = window.outerWidth;
-        const parentHeight = window.outerHeight;
-        const left = parentLeft + (parentWidth - windowWidth) / 2;
-        const top = parentTop + (parentHeight - windowHeight) / 2;
- 
-        // CALCULATE WINDOW SIZE BASED ON CONTENT
-        // const headerHeight = 100;
-        // const buttonHeight = 50;
-        // const padding = 80;
-        // const paddingBottom = 80;
-        
-        // const windowWidth = previewCanvas.width + padding;
-        // const windowHeight = previewCanvas.height + headerHeight + buttonHeight + padding + paddingBottom;
-
-        // const windowWidth = previewCanvas.width + 100;
-        // const windowHeight = previewCanvas.height + 100;
-        
-        // // CALCULATE WINDOW CENTER BASED ON PARENT ELEMENT
-        // const parentLeft = window.screenX;
-        // const parentTop = window.screenY;
-        // const parentWidth = window.outerWidth;
-        // const parentHeight = window.outerHeight;
-
-        // // CALCULATE CENTER POSITION
-        // const left = parentLeft + (parentWidth - windowWidth);
-        // const top = parentTop + (parentHeight - windowHeight);
-        
+    
+        // Get the cropBox dimensions
+        const cropBox = document.querySelector(".crop-box");
+        if (!cropBox) {
+            alert("Crop box not found!");
+            return;
+        }
+    
+        const cropBoxRect = cropBox.getBoundingClientRect();
+        const parentWidth = window.innerWidth;
+        const parentHeight = window.innerHeight;
+    
+        // Set padding around the video
+        const padding = 40; // Adjust for margin around the video
+    
+        // Get true resolution with high pixel density
+        const pixelRatio = window.devicePixelRatio || 1;
+    
+        let cropWidth = cropBoxRect.width * pixelRatio;
+        let cropHeight = cropBoxRect.height * pixelRatio;
+    
+        // Ensure the preview fits within the available screen size
+        const maxPreviewWidth = parentWidth - padding * 2;
+        const maxPreviewHeight = parentHeight - padding * 2 - 60; // Extra for button
+    
+        // Scale down if needed to fit within the preview window
+        const scaleFactor = Math.min(1, maxPreviewWidth / cropWidth, maxPreviewHeight / cropHeight);
+    
+        cropWidth *= scaleFactor;
+        cropHeight *= scaleFactor;
+    
+        // Calculate preview window size
+        const windowWidth = cropWidth + padding * 2;
+        const windowHeight = cropHeight + padding * 2 + 60; // Extra for button
+    
+        // Center the preview window
+        const left = window.screenX + (window.outerWidth - windowWidth) / 2;
+        const top = window.screenY + (window.outerHeight - windowHeight) / 2;
+    
         const previewWindow = window.open("", "CroppedLivePreview", 
-            `width=${parentWidth},height=${parentHeight},left=${left},top=${top}`);
-
+            `width=${windowWidth},height=${windowHeight},left=${left},top=${top},resizable=no`);
+    
         if (!previewWindow) {
             this.updateStatus('Pop-ups are blocked. Please allow popups for this site.');
             return;
         }
-
+    
         previewWindow.document.write(`
             <html>
             <head>
                 <title>Live Preview</title>
                 <style>
-                    body { 
-                        margin: 0; 
-                        // padding: 20px;
-                        // display: flex;
-                        // flex-direction: column;
+                    body {
+                        margin: 0;
                         background: black;
                         color: white;
                         font-family: Arial, sans-serif;
-                        // height: ${previewCanvas.height}px;
-                        box-sizing: border-box;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        flex-direction: column;
+                        height: 100vh;
+                        overflow: hidden;
                     }
                     .preview-container {
                         display: flex;
                         flex-direction: column;
-                        // height: 80%;
-                        // overflow: hidden;
                         align-items: center;
-                    }
-                    .preview-header {
-                        text-align: center;
-                        flex: 0 0 auto;
-                        margin-bottom: 10px;
-                    }
-                    h3 {
-                        margin: 0 0 5px 0;
-                        font-size: 16px;
-                    }
-                    .preview-subtitle {
-                        color: #999;
-                        font-size: 12px;
-                        display: block;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                        padding: ${padding}px;
                     }
                     .canvas-wrapper {
-                        // flex: 1 1 auto;
-                        flex: 1;
                         display: flex;
                         justify-content: center;
                         align-items: center;
+                        width: ${cropWidth}px;
+                        height: ${cropHeight}px;
+                        background-color: #222;
+                        border-radius: 10px;
+                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
                     }
-                    canvas { 
-                        // display: block;
-                        // width: ${previewCanvas.width}px;
-                        // height: ${previewCanvas.height}px;
-                        width: ${ scaledCanvasWidth }px;
-                        height: ${ scaledCanvasHeight }px;
-                        image-rendering: -webkit-optimize-contrast;
-                        image-rendering: crisp-edges;
+                    canvas {
+                        width: 100%;
+                        height: 100%;
                         image-rendering: pixelated;
                     }
                     .button-wrapper {
-                        flex: 0 0 auto;
                         text-align: center;
-                        margin-top: 10px;
+                        margin-top: 15px;
                     }
                     .btn-stop {
-                        padding: 8px 16px;
+                        padding: 12px 24px;
                         background-color: #dc3545;
                         color: white;
                         border: none;
                         border-radius: 5px;
                         cursor: pointer;
-                        font-size: 14px;
+                        font-size: 16px;
+                        transition: background 0.2s;
                     }
                     .btn-stop:hover {
                         background-color: #c82333;
@@ -212,68 +186,72 @@ export class UIManager {
             </head>
             <body>
                 <div class="preview-container">
-                    <div class="preview-header">
-                        <h3>Live Preview</h3>
-                        <span class="preview-subtitle">Real-time view of captured whole slide image regions</span>
-                    </div>
                     <div class="canvas-wrapper">
                         <canvas id="mirroredCanvas"></canvas>
                     </div>
-
-                </div>
-                <div class="button-wrapper">
-                    <button class="btn-stop" id="stopRecordingButton">
-                        Stop Recording
-                    </button>
+                    <div class="button-wrapper">
+                        <button class="btn-stop" id="stopRecordingButton">Stop Recording</button>
+                    </div>
                 </div>
             </body>
             </html>
         `);
-
+    
         previewWindow.document.close();
         this.previewWindow = previewWindow;
-
-        // BRING TO FRONT (FOCUS)
         previewWindow.focus();
-
-        // WAIT FOR WINDOW TO LOAD
+    
         previewWindow.onload = () => {
-
             const mirroredCanvas = previewWindow.document.getElementById('mirroredCanvas');
-            const mirroredCtx = mirroredCanvas.getContext('2d');
-
-            // MATCH CANVAS SIZE TO ORIGINAL PREVIEW CANVAS
-            mirroredCanvas.width = previewCanvas.width;
-            mirroredCanvas.height = previewCanvas.height;
-
+            const mirroredCtx = mirroredCanvas.getContext('2d', { willReadFrequently: true });
+    
+            // **High DPI Scaling**
+            mirroredCanvas.width = cropWidth * pixelRatio;
+            mirroredCanvas.height = cropHeight * pixelRatio;
+            mirroredCanvas.style.width = `${cropWidth}px`;
+            mirroredCanvas.style.height = `${cropHeight}px`;
+    
+            // **Disable Smoothing for Pixel-Perfect Quality**
+            mirroredCtx.imageSmoothingEnabled = false;
+    
+            // **Use an Offscreen Canvas for High-Quality Rendering**
+            const offscreenCanvas = document.createElement('canvas');
+            const offscreenCtx = offscreenCanvas.getContext('2d');
+    
+            offscreenCanvas.width = previewCanvas.width * pixelRatio;
+            offscreenCanvas.height = previewCanvas.height * pixelRatio;
+    
             const updatePreview = () => {
                 if (!previewCanvas) return;
+    
+                // Copy to offscreen canvas at full resolution
+                offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                offscreenCtx.drawImage(previewCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+    
+                // Copy to mirrored canvas, scaling it down smoothly
                 mirroredCtx.clearRect(0, 0, mirroredCanvas.width, mirroredCanvas.height);
-                mirroredCtx.drawImage(previewCanvas, 0, 0, mirroredCanvas.width, mirroredCanvas.height);
+                mirroredCtx.drawImage(offscreenCanvas, 0, 0, mirroredCanvas.width, mirroredCanvas.height);
+    
                 requestAnimationFrame(updatePreview);
-            }
-
+            };
+    
             updatePreview();
-
         };
-
-        // ADD EVENT LISTENER FOR STOP RECORDING BUTTON
+    
+        // Stop button listener
         previewWindow.document.getElementById('stopRecordingButton').addEventListener('click', () => {
             this.elements.stopRecordingButton.click();
             previewWindow.close();
-            screenContainer.style.display = 'none';
-            // BRING MAIN WINDOW BACK TO FOCUS
             window.focus();
         });
-
-        // ADD WINDOW CLOSE HANDLER
+    
+        // Ensure window close stops recording
         previewWindow.onbeforeunload = () => {
             this.elements.stopRecordingButton.click();
             window.focus();
         };
-
-        previewWindow.focus();
     }
+    
 
     scrollToElement(element) {
 

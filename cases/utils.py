@@ -1,4 +1,5 @@
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+import os
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions, ContentSettings
 from azure.core.exceptions import ResourceExistsError
 from datetime import datetime, timezone, timedelta
 from django.conf import settings
@@ -49,10 +50,10 @@ def upload_to_azure_blob(file_obj, filename):
         print("DEBUG MODE: Skipping Azure Upload")
         return f"http://fake-azure-url.com/video.webm"
     
-    sas_token = generate_sas_token()
-    if not sas_token:
-        logger.warning('Failed to generate SAS token.')
-        return False
+    # sas_token = generate_sas_token()
+    # if not sas_token:
+    #     logger.warning('Failed to generate SAS token.')
+    #     return False
 
     try:
 
@@ -66,7 +67,7 @@ def upload_to_azure_blob(file_obj, filename):
         container_client = blob_service_client.get_container_client(container_name)
 
         if not container_client.exists():
-            print(f'creationg container: { container_name }')
+            print(f'creating container: { container_name }')
             logger.info(f'creationg container: { container_name }')
         else:
             print(f'container { container_name } already exists')
@@ -79,7 +80,31 @@ def upload_to_azure_blob(file_obj, filename):
 
         blob_client = container_client.get_blob_client(filename)
 
-        blob_client.upload_blob(file_obj, overwrite=True)
+        file_obj.seek(0, os.SEEK_END)
+        file_size = file_obj.tell()
+        file_obj.seek(0)
+
+        chunk_size = 4 * 1024 * 1024 # 4MB CHUNKS
+
+        if file_size < chunk_size:
+            # SIMPLE UPLOAD FOR SMALL FILES
+            blob_client.upload_blob(
+                file_obj, 
+                overwrite=True,
+                content_settings=ContentSettings(content_typ="video/webm")
+            )
+        else:
+            # USE CHUNKED UPLOAD FOR LARGE FILES
+            blob_client.upload_blob(
+                file_obj,
+                overwrite=True,
+                max_concurrency=4,
+                blob_type="BlockBlob",
+            )
+
+            # SET CONTENT TYPE AFTER UPLOAD FOR LARGE FILES
+            blob_client.set_http_headers(content_settings=ContentSettings(content_type="video/webm"))
+
         print(f"Uplaoded { filename } to Azure Blob Storage")
         logger.info(f"Uplaoded { filename } to Azure Blob Storage")
 

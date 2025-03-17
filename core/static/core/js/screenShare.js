@@ -78,10 +78,10 @@ export class ScreenShare {
 
         dimensionsDiv.textContent = `Source: ${this.trueWidth}x${this.trueHeight} | Crop: ${trueBoxWidth}x${trueBoxHeight} | Scale: ${scale.toFixed(2)}x`;
 
-        // previewCanvas.width = trueBoxWidth;
-        // previewCanvas.height = trueBoxHeight;
-        previewCanvas.width = width;
-        previewCanvas.height = height;
+        previewCanvas.width = trueBoxWidth;
+        previewCanvas.height = trueBoxHeight;
+        // previewCanvas.width = width;
+        // previewCanvas.height = height;
     }
 
     enableDrawing() {
@@ -168,7 +168,8 @@ export class ScreenShare {
             // START SCREEN SHARING
             this.stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
-                    cursor: "never",
+                    // cursor: "never",
+                    cursor: "always",
                     displaySurface: "window",
 
                     height: { max: 3840 }, // MAX RESOLUTION (4K)
@@ -244,8 +245,8 @@ export class ScreenShare {
         this.recordedChunks = [];
 
         this.recorder = new MediaRecorder(this.stream, { 
-            mimeType: "video/webm",
-            videoBitsPerSecond: 15_000_000 // HIGH BIT RATE QUALITY
+            mimeType: "video/webm; codesc=h264", //; codecs=vp8 vp9 NOT WIDELY SUPPORTED
+            videoBitsPerSecond: 25_000_000 // HIGH BIT RATE QUALITY
         });
 
         this.recorder.ondataavailable = event => {
@@ -258,7 +259,12 @@ export class ScreenShare {
             this.saveRecording();
         };
 
-        this.recorder.start();
+        // FORCE A KEYFRAME EVERY 1 SECOND TO MAINTAIN SMOOTH PLAYBACK
+        this.stream.getVideoTracks()[0].applyConstraints({
+            frameRate: { ideal: 60, max: 60 },
+        });
+
+        this.recorder.start(100); // REQUEST KEYFRAME EVERY 100ms
         this.uiManager.updateStatus('Recording in progress...');
 
     }
@@ -308,11 +314,11 @@ export class ScreenShare {
         updateProgressBar();
 
         // SAVE VIDEO LOCALLY
-        // const url = URL.createObjectURL(blob);
-        // const a = document.createElement("a");
-        // a.href = url;
-        // a.download = `high_res_screen_recording.webm`;
-        // a.click();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `high_res_screen_recording.webm`;
+        a.click();
 
         try {
 
@@ -345,6 +351,7 @@ export class ScreenShare {
                 // if (!postResponse.ok) {
                 //     throw new Error(`Failed to create video status: ${ postResponse.status }`);
                 // }
+
                 checkVideoStatus(result.video_id);
                 
             } else {

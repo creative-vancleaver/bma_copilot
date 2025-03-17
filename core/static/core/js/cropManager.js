@@ -87,6 +87,7 @@ export class CropManager {
 
         // Only enable confirm button if there's a valid crop selection
         const cropBox = this.cropBox.getBoundingClientRect();
+        console.log('crop box ', cropBox.width, cropBox.height);
         if (cropBox.width > this.minCrop && cropBox.height > this.minCrop) {  // Ensure minimum size
             this.uiManager.updateConfirmRecordButton(true);
             let message = `Select <span>Confirm Region</span> to begin recording.`;
