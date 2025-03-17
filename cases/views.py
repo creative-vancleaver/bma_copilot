@@ -76,7 +76,7 @@ def save_recording(request):
 
                 response = upload_video_notice(payload)
 
-                print('blob URL === ', blob_url);
+                print('blob URL === ', blob_url)
 
                 if response.get('statusCode') != 200:
                     return JsonResponse({
@@ -126,12 +126,13 @@ class VideoStatusView(View):
             return JsonResponse({ 'error': 'Invalid JSON' }, status=400)
         
     def get(self, request, video_id=None):
+        print('video status GET = ', request)
 
         if not video_id:
             return JsonResponse({ 'error': 'Missing video_id' }, status=400)
         
         response = get_video_status(video_id)
-        print(response)
+        print('get video status RESPONSE ', response)
         return JsonResponse(response)
     
     def put(self, request):

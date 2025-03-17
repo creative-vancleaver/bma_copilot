@@ -152,12 +152,12 @@ export function checkVideoStatus(videoId) {
                 return acc;
             }, progressMessages[0]);
 
-            const getResponse = await fetch(`/api/cases/video-status/${ videoId }`);
+            const getResponse = await fetch(`/api/cases/video-status/${ videoId }/`);
             const getResponseData = await getResponse.json();
 
             // PARSE NESTED JSON STRING
             const data = JSON.parse(getResponseData.body);
-            console.log('data = ', data)
+            console.log('GET response data = ', data)
 
             if (getResponse.ok) {
                 processingState.caseId = caseId;
