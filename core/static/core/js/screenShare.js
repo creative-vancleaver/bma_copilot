@@ -314,11 +314,11 @@ export class ScreenShare {
         updateProgressBar();
 
         // SAVE VIDEO LOCALLY
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `high_res_screen_recording.webm`;
-        a.click();
+        // const url = URL.createObjectURL(blob);
+        // const a = document.createElement("a");
+        // a.href = url;
+        // a.download = `high_res_screen_recording.webm`;
+        // a.click();
 
         try {
 
