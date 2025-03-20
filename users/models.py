@@ -2,6 +2,7 @@ import uuid
 import re
 from django.db import models
 from django.db.models import Max
+from django.utils import timezone
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class CustomUserManager(BaseUserManager):
@@ -12,6 +13,7 @@ class CustomUserManager(BaseUserManager):
         
         email = self.normalize_email(email)
         extra_fields.setdefault('user_id', self.generate_user_id())
+        extra_fields.setdefault('date_joined', timezone.now())
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
